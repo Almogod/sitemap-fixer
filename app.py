@@ -36,11 +36,11 @@ def home(request: Request):
 
 @app.post("/generate")
 def generate(
-    request: Request,
-    domain: str = Form(...),
-    limit: int = Form(200),
-    use_js: bool = Form(False),
-    fix_canonical: bool = Form(False),
+    return templates.TemplateResponse("index.html", {
+    "request": request,
+    "files": files,
+    "count": len(clean_urls)
+})
 ):
     if use_js:
         pages = crawl_js_sync(domain, limit=limit)
