@@ -4,6 +4,8 @@ from src.extractor import extract_metadata
 from src.normalizer import normalize
 from src.filter import is_valid
 from src.generator import generate_sitemap
+from src.js_crawler import crawl_js_sync
+
 
 def build_clean_urls(pages, fix_canonical=False):
     seen = set()
@@ -33,11 +35,18 @@ if __name__ == "__main__":
     parser.add_argument("--limit", type=int, default=200, help="Max pages to crawl")
     parser.add_argument("--output", default="sitemap.xml", help="Output file name")
     parser.add_argument("--fix-canonical", action="store_true", help="Use canonical URLs")
-
+    parser.add_argument("--js", action="store_true", help="Enable JS rendering (Playwright)")
     args = parser.parse_args()
 
     print(f"Crawling {args.domain}...")
-    pages = crawl(args.domain, limit=args.limit)
+    
+    # Updated Crawl Logic
+    if args.js:
+        print("Using JS crawler...")
+        pages = crawl_js_sync(args.domain, limit=args.limit)
+    else:
+        print("Using standard crawler...")
+        pages = crawl(args.domain, limit=args.limit)
 
     print("Processing...")
     clean_urls = build_clean_urls(pages, fix_canonical=args.fix_canonical)
