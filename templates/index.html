@@ -23,5 +23,15 @@
 
         <button type="submit">Generate Sitemap</button>
     </form>
+
+    {% if files %}
+    <h3>Generated {{count}} URLs</h3>
+    <ul>
+        {% for file in files %}
+            <li><a href="/{{file}}" target="_blank">{{file}}</a></li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
 </body>
 </html>
