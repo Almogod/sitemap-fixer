@@ -24,6 +24,21 @@ for p in pages:
     seen.add(normalized)
     clean.add(normalized)
 
+for p in pages:
+    meta = extract_metadata(p)
+
+    if not is_valid(meta):
+        continue
+
+    chosen = meta["canonical"] if fix_canonical else meta["url"]
+    normalized = normalize(chosen)
+
+    if normalized in seen:
+        continue
+
+    seen.add(normalized)
+    clean.add(normalized)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Sitemap Fixer Tool")
