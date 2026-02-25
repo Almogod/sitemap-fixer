@@ -38,6 +38,7 @@ def home(request: Request):
 
 
 @app.post("/generate")
+def generate(request: Request, domain: str = Form(...), limit: int = Form(200), use_js: bool = Form(False)):
 def generate(
     return templates.TemplateResponse("index.html", {
     "request": request,
