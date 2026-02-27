@@ -28,7 +28,7 @@
     <h3>Generated {{count}} URLs</h3>
     <ul>
         {% for file in files %}
-            <li><a href="/download{{file}}" target="_blank">{{file}}</a></li>
+            <li><a href="/download?path={{file}}" target="_blank">Download</a></li>
         {% endfor %}
     </ul>
     {% endif %}
