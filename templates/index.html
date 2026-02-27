@@ -6,6 +6,13 @@
 <body>
     <h1>Sitemap Fixer</h1>
 
+    <!-- Error Message Display -->
+    {% if error %}
+        <p style="color:red; background-color: #ffe6e6; padding: 10px; border: 1px solid red;">
+            <strong>Error:</strong> {{ error }}
+        </p>
+    {% endif %}
+
     <form action="/generate" method="post">
         <label>Domain:</label><br>
         <input type="text" name="domain" placeholder="https://example.com" required><br><br>
@@ -25,10 +32,16 @@
     </form>
 
     {% if files %}
-    <h3>Generated {{count}} URLs</h3>
+    <hr>
+    <h3>Generated {{ count }} URLs</h3>
     <ul>
         {% for file in files %}
-            <li><a href="/download?path={{file}}" target="_blank">Download</a></li>
+            <li>
+                <!-- Updated to use the filename from the path for the download route -->
+                <a href="/download/{{ file.split('/')[-1] if '/' in file else file.split('\\')[-1] }}" target="_blank">
+                    Download {{ file.split('/')[-1] if '/' in file else file.split('\\')[-1] }}
+                </a>
+            </li>
         {% endfor %}
     </ul>
     {% endif %}
