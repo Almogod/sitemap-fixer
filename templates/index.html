@@ -43,18 +43,22 @@
 {% if audit %}
     <h2>SEO Audit Report</h2>
 
-    <p><b>Total Crawled:</b> {{audit.total_pages_crawled}}</p>
-    <p><b>Final URLs in Sitemap:</b> {{audit.total_clean_urls}}</p>
+    <h3>SEO Score: {{audit.score}} / 100</h3>
 
-    {% for issue, urls in audit.issues.items() %}
-        <h3>{{issue.replace("_", " ").title()}} ({{urls|length}})</h3>
-        <ul>
-            {% for url in urls[:10] %}
-                <li>{{url}}</li>
-            {% endfor %}
-        </ul>
-    {% endfor %}
-{% endif %}
+    {% if audit.score > 80 %}
+        <p style="color:green;">Good SEO health</p>
+    {% elif audit.score > 50 %}
+        <p style="color:orange;">Average SEO health</p>
+    {% else %}
+        <p style="color:red;">Poor SEO health</p>
+    {% endif %}
+
+    <h3>Fix Suggestions</h3>
+    <ul>
+        {% for suggestion in audit.suggestions %}
+            <li>{{suggestion}}</li>
+        {% endfor %}
+    </ul>
 
 </body>
 </html>
