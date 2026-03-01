@@ -56,22 +56,27 @@ def generate(
     use_js: bool = Form(False),
     fix_canonical: bool = Form(False),
 ):
+    try:
+        if use_js:
+            pages = crawl_js_sync(domain, limit=limit)
+        else:
+            pages = crawl(domain, limit=limit)
 
-try:
-    if use_js:
-        pages = crawl_js_sync(domain, limit=limit)
-    else:
-        pages = crawl(domain, limit=limit)
+        clean_urls = build_clean_urls(pages, fix_canonical)
+        files = generate_sitemaps(clean_urls, base_url=domain)
 
-    clean_urls = build_clean_urls(pages, fix_canonical)
-    files = generate_sitemaps(clean_urls, base_url=domain)
+        return templates.TemplateResponse("index.html", {
+            "request": request,
+            "files": files,
+            "message": "Sitemaps generated successfully!"
+        })
 
+    except Exception as e:
+        return templates.TemplateResponse("index.html", {
+            "request": request,
+            "error": str(e)
+        })
 
-except Exception as e:
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "error": str(e)
-    })
 
 @app.get("/download")
 def download_file(path: str):
