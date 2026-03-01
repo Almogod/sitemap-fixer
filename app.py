@@ -13,6 +13,8 @@ from src.normalizer import normalize
 from src.filter import is_valid
 from src.generator import generate_sitemaps
 from src.sitemap_parser import get_sitemap_urls
+# Audit modules
+from src.audit import generate_audit_report
 
 app = FastAPI()
 
@@ -113,6 +115,8 @@ def generate(
         # -----------------------------
         clean_urls = build_clean_urls(pages, fix_canonical)
 
+        audit = generate_audit_report(pages, clean_urls)
+
         files = generate_sitemaps(clean_urls, base_url=domain)
 
         return templates.TemplateResponse("index.html", {
@@ -124,7 +128,9 @@ def generate(
     except Exception as e:
         return templates.TemplateResponse("index.html", {
             "request": request,
-            "error": f"Error: {str(e)}"
+            "files": files,
+            "count": len(clean_urls),
+            "audit": audit
         })
 
 
