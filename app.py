@@ -20,31 +20,20 @@ templates = Jinja2Templates(directory="templates")
 
 def build_clean_urls(pages, fix_canonical=False):
     clean = set()
-
     for p in pages:
         meta = extract_metadata(p)
-
         if not is_valid(meta):
             continue
-
         chosen = meta["url"]
-
         if fix_canonical:
             canonical = meta.get("canonical")
-
             if canonical and canonical.startswith("http"):
                 chosen = canonical
-
         try:
             clean.add(normalize(chosen))
         except:
             continue
-
     return list(clean)
-
-def run_js(domain, limit):
-    return crawl_js_sync(domain, limit=limit)
-
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
@@ -58,29 +47,29 @@ def generate(
     use_js: bool = Form(False),
     fix_canonical: bool = Form(False),
 ):
-    def run_js(domain, limit):
-        return crawl_js_sync(domain, limit=limit)
+    # Local helper for the executor
+    def run_js_task(target_domain, target_limit):
+        return crawl_js_sync(target_domain, limit=target_limit)
 
     try:
         if use_js:
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(run_js, domain, limit)
-                pages = future.result(timeout=30)
+                future = executor.submit(run_js_task, domain, limit)
                 try:
-                    pages = futures.result(timeout=60)
-                except: 
+                    # Single call to result with a unified timeout
+                    pages = future.result(timeout=60)
+                except Exception: 
                     pages = []
         else:
             pages = crawl(domain, limit=limit)
 
-       if not pages:
+        if not pages:
             return templates.TemplateResponse("index.html", {
                 "request": request,
-                "error": "JS crawling failed or timed out"
+                "error": "Crawling failed or timed out. No pages found."
             })
 
         clean_urls = build_clean_urls(pages, fix_canonical)
-
         files = generate_sitemaps(clean_urls, base_url=domain)
 
         return templates.TemplateResponse("index.html", {
@@ -92,11 +81,11 @@ def generate(
     except Exception as e:
         return templates.TemplateResponse("index.html", {
             "request": request,
-            "error": str(e)
+            "error": f"An error occurred: {str(e)}"
         })
-
 
 @app.get("/download")
 def download_file(file: str):
+    # Security note: Ensure 'file' is validated to prevent path traversal
     file_path = os.path.abspath(file)
     return FileResponse(file_path, filename=os.path.basename(file_path))
