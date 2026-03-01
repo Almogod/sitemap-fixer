@@ -4,7 +4,9 @@
     <title>Sitemap Fixer</title>
 </head>
 <body>
-
+<h2>DEBUG: {{debug}}</h2>
+<h3>Audit present: {{ audit }}</h3>
+<h3>Fixes present: {{ fixes }}</h3>
 <h1>Sitemap Fixer</h1>
 
 <form action="/generate" method="post">
@@ -49,7 +51,7 @@
 <hr>
 
 <!-- SEO AUDIT -->
-{% if audit %}
+{% if audit is defined %}
     <h2>SEO Audit Report</h2>
 
     <h3>SEO Score: {{audit.score}} / 100</h3>
@@ -85,7 +87,7 @@
 <hr>
 
 <!-- FIXES -->
-{% if fixes %}
+{% if fixes is defined %}
     <h2>Fixes Applied Automatically</h2>
     <ul>
         {% for fix in fixes %}
