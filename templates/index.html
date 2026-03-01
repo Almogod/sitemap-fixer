@@ -60,5 +60,19 @@
         {% endfor %}
     </ul>
 
+    <p><b>Total Crawled:</b> {{audit.total_pages_crawled}}</p>
+    <p><b>Final URLs in Sitemap:</b> {{audit.total_clean_urls}}</p>
+
+    {% for issue, urls in audit.issues.items() %}
+        <h3>{{issue.replace("_", " ").title()}} ({{urls|length}})</h3>
+        <ul>
+            {% for url in urls[:10] %}
+                <li>{{url}}</li>
+            {% endfor %}
+        </ul>
+    {% endfor %}
+{% endif %}
+
+    
 </body>
 </html>
