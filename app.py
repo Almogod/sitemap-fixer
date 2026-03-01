@@ -131,7 +131,8 @@ def generate(
             "files": files,
             "count": len(clean_urls),
             "audit": audit,
-            "fixes": fixes_applied
+            "fixes": fixes_applied,
+            "debug": "TEST_WORKING"
         })
 
 
