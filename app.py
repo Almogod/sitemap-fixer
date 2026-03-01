@@ -18,7 +18,6 @@ app = FastAPI()
 # Setup templates directory using Jinja2
 templates = Jinja2Templates(directory="templates")
 
-
 def build_clean_urls(pages, fix_canonical=False):
     clean = set()
 
@@ -43,7 +42,6 @@ def build_clean_urls(pages, fix_canonical=False):
 
     return list(clean)
 
-
 def run_js(domain, limit):
     return crawl_js_sync(domain, limit=limit)
 
@@ -52,35 +50,33 @@ def run_js(domain, limit):
 def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-
 @app.post("/generate", response_class=HTMLResponse)
 def generate(
     request: Request,
     domain: str = Form(...),
-    limit: int = Form(200),
+    limit: int = Form(50),  # reduced for JS stability
     use_js: bool = Form(False),
     fix_canonical: bool = Form(False),
 ):
-    # --- New Crawl Section with ThreadPoolExecutor ---
+    def run_js(domain, limit):
+        return crawl_js_sync(domain, limit=limit)
+
     try:
         if use_js:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 future = executor.submit(run_js, domain, limit)
-                pages = future.result(timeout=30)   # hard timeout
+                pages = future.result(timeout=30)
         else:
             pages = crawl(domain, limit=limit)
-    except:
-        pages = []  # fail safely instead of hanging
-    # ------------------------------------------------
 
-    try:
         clean_urls = build_clean_urls(pages, fix_canonical)
+
         files = generate_sitemaps(clean_urls, base_url=domain)
 
         return templates.TemplateResponse("index.html", {
             "request": request,
             "files": files,
-            "message": "Sitemaps generated successfully!" if pages else "No pages were found (or the request timed out)."
+            "count": len(clean_urls)
         })
 
     except Exception as e:
@@ -89,7 +85,7 @@ def generate(
             "error": str(e)
         })
 
-
 @app.get("/download")
-def download_file(path: str):
-    return FileResponse(path=path, filename=os.path.basename(path))
+def download_file(file: str):
+    file_path = os.path.abspath(file)
+    return FileResponse(file_path, filename=os.path.basename(file_path))
