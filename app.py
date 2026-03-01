@@ -57,15 +57,15 @@ def generate(
     fix_canonical: bool = Form(False),
 ):
 
-    try:
+try:
     if use_js:
         pages = crawl_js_sync(domain, limit=limit)
     else:
         pages = crawl(domain, limit=limit)
 
     clean_urls = build_clean_urls(pages, fix_canonical)
-
     files = generate_sitemaps(clean_urls, base_url=domain)
+
 
 except Exception as e:
     return templates.TemplateResponse("index.html", {
