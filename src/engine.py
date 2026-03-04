@@ -5,6 +5,7 @@ from src.fixer import fix_urls
 from src.modules.sitemap import fix_sitemap
 from src.modules.canonical import fix_canonical_tags
 from src.modules.robots import fix_robots
+from src.modules.meta import analyze_meta, generate_meta_tags
 
 
 def run_engine(pages, clean_urls, domain):
@@ -12,10 +13,16 @@ def run_engine(pages, clean_urls, domain):
 
     plan = build_fix_plan(audit)
 
+    # Analyze and generate meta fixes
+    meta_issues = analyze_meta(pages)
+    meta_fixes = generate_meta_tags(pages)
+
     context = {
         "urls": clean_urls,
         "domain": domain,
-        "pages": pages
+        "pages": pages,
+        "meta_issues": meta_issues,
+        "meta_fixes": meta_fixes
     }
 
     # Apply modular fixes
@@ -34,7 +41,9 @@ def run_engine(pages, clean_urls, domain):
     return {
         "audit": audit,
         "plan": plan,
-        "fixed_urls": context["urls"]
+        "fixed_urls": context["urls"],
+        "meta_issues": context["meta_issues"],
+        "meta_fixes": context["meta_fixes"]
     }
 
 
