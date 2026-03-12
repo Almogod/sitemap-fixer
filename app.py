@@ -17,7 +17,7 @@ from src.sitemap_parser import get_sitemap_urls
 from src.audit import generate_audit_report
 from src.fixer import fix_urls, generate_fix_report
 #Engine modules
-from src.engine import run_engine
+from src.engine.engine import run_engine
 
 app = FastAPI()
 
