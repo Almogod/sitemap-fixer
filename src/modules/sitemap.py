@@ -1,3 +1,4 @@
+from src.services.generator import generate_sitemaps
 def fix_sitemap(urls):
     cleaned = set()
 
