@@ -74,9 +74,10 @@ def generate(
     fix_canonical: bool = Form(False),
 ):
     try:
-        # 1. Crawl
-        pages = crawl(domain, limit=limit)
+        crawl_result = crawl(domain, limit=limit)
 
+        pages = crawl_result["pages"]
+        graph = crawl_result["graph"]
         # 2. Add sitemap URLs
         sitemap_urls = get_sitemap_urls(domain)
         for url in sitemap_urls:
