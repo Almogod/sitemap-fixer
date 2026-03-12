@@ -6,8 +6,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
 
 # Core modules
-from src.crawler import crawl
-from src.js_crawler import crawl_js_sync  # optional fallback
+from src.crawler_engine.crawler import crawl
+from src.crawler_engine.js_crawler import crawl_js_sync  # optional fallback
 from src.extractor import extract_metadata
 from src.normalizer import normalize
 from src.filter import is_valid
