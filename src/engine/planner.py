@@ -24,5 +24,6 @@ def build_fix_plan(audit):
     plan.append("schema")
     plan.append("image_seo")
     plan.append("core_web_vitals")
+    plan.append("keyword_gap")
 
     return plan
