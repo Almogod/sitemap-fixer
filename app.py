@@ -8,14 +8,14 @@ from fastapi.requests import Request
 # Core modules
 from src.crawler_engine.crawler import crawl
 from src.crawler_engine.js_crawler import crawl_js_sync  # optional fallback
-from src.extractor import extract_metadata
-from src.normalizer import normalize
-from src.filter import is_valid
-from src.generator import generate_sitemaps
-from src.sitemap_parser import get_sitemap_urls
+from src.services.extractor import extract_metadata
+from src.services.normalizer import normalize
+from src.services.filter import is_valid
+from src.services.generator import generate_sitemaps
+from src.services.sitemap_parser import get_sitemap_urls
 # Audit modules
-from src.audit import generate_audit_report
-from src.fixer import fix_urls, generate_fix_report
+from src.services.audit import generate_audit_report
+from src.services.fixer import fix_urls, generate_fix_report
 #Engine modules
 from src.engine.engine import run_engine
 

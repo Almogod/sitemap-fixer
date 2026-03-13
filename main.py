@@ -1,10 +1,10 @@
 import argparse
-from src.crawler import crawl
-from src.extractor import extract_metadata
-from src.normalizer import normalize
-from src.filter import is_valid
-from src.generator import generate_sitemap
-from src.js_crawler import crawl_js_sync
+from src.crawler_engine.crawler import crawl
+from src.services.extractor import extract_metadata
+from src.services.normalizer import normalize
+from src.services.filter import is_valid
+from src.services.generator import generate_sitemaps
+from src.crawler_engine.js_crawler import crawl_js_sync
 
 
 def build_clean_urls(pages, fix_canonical=False):
