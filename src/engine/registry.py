@@ -5,5 +5,6 @@ MODULE_REGISTRY = {
     "canonical": canonical,
     "robots": robots,
     "meta": meta,
-    "internal_links": internal_links
+    "internal_links": internal_links,
+    "crawl_budget": crawl_budget
 }
