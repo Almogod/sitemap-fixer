@@ -140,6 +140,11 @@ def generate(
         image_issues = image_results.get("issues", [])
         image_fixes = image_results.get("fixes", {})
 
+        #Core web vitals
+        core_results = engine_result["modules"].get("core_web_vitals", {})
+        core_issues = core_results.get("issues", [])
+        core_suggestions = core_results.get("suggestions", {})
+
         if task_id: progress_store[task_id] = "Writing output files..."
         time.sleep(1.5)
         files = generate_sitemaps(fixed_urls, base_url=domain)
