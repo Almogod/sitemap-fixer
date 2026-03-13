@@ -2,13 +2,21 @@ def compute_score(engine_results):
 
     score = 100
 
-    for module, result in engine_results["modules"].items():
+    modules = engine_results.get("modules", {})
+
+    for module_name, result in modules.items():
 
         if not result:
             continue
 
-        issues = result.get("issues", [])
+        issues = result.get("issues")
 
-        score -= min(len(issues) * 2, 20)
+        if not issues:
+            continue
 
-    return max(score, 0)
+        score -= min(len(issues) * 2, 15)
+
+    if score < 0:
+        score = 0
+
+    return score
