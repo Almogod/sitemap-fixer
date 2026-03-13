@@ -8,7 +8,7 @@ from src.engine.registry import MODULE_REGISTRY
 # Initialize logger
 logger = logging.getLogger(__name__)
 
-def run_engine(pages, clean_urls, domain, graph):
+def run_engine(pages, clean_urls, domain, graph, progress_callback=None):
     """
     Core SEO repair engine.
 
@@ -32,11 +32,13 @@ def run_engine(pages, clean_urls, domain, graph):
     # -----------------------------
     # RUN AUDIT
     # -----------------------------
+    if progress_callback: progress_callback("Running site audit...")
     audit = generate_audit_report(pages, clean_urls)
 
     # -----------------------------
     # BUILD EXECUTION PLAN
     # -----------------------------
+    if progress_callback: progress_callback("Building execution plan...")
     plan = build_fix_plan(audit)
 
     results = {
@@ -59,6 +61,7 @@ def run_engine(pages, clean_urls, domain, graph):
 
         # Added logging here
         logger.info("Running module: %s", module_name)
+        if progress_callback: progress_callback(f"Running module: {module_name}...")
 
         try:
             module_result = module.run(context)

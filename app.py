@@ -1,4 +1,5 @@
 import os
+import time
 import concurrent.futures
 from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse, FileResponse
@@ -23,6 +24,14 @@ app = FastAPI()
 
 templates = Jinja2Templates(directory="templates")
 
+# -----------------------------
+# PROGRESS TRACKING
+# -----------------------------
+progress_store = {}
+
+@app.get("/progress")
+def get_progress(task_id: str):
+    return {"status": progress_store.get(task_id, "Starting..."), "progress": None}
 
 # -----------------------------
 # URL CLEANING LOGIC (IMPROVED)
@@ -51,7 +60,7 @@ def build_clean_urls(pages, fix_canonical=False):
         except:
             continue
 
-    return list(clean)
+    return sorted(list(clean))
 
 
 # -----------------------------
@@ -72,10 +81,15 @@ def generate(
     limit: int = Form(50),
     use_js: bool = Form(False),
     fix_canonical: bool = Form(False),
+    task_id: str = Form(None)
 ):
     try:
+        if task_id: progress_store[task_id] = "Crawling website pages..."
+        time.sleep(1.5)
         pages, graph = crawl(domain, limit=limit)
         # 2. Add sitemap URLs
+        if task_id: progress_store[task_id] = "Checking existing sitemap..."
+        time.sleep(1.5)
         sitemap_urls = get_sitemap_urls(domain)
         for url in sitemap_urls:
             pages.append({
@@ -84,9 +98,18 @@ def generate(
                 "html": ""
             })
 
+        # Sort pages to guarantee deterministic execution order later
+        pages.sort(key=lambda x: x["url"])
+
+        if task_id: progress_store[task_id] = "Cleaning URLs..."
+        time.sleep(1.5)
         clean_urls = build_clean_urls(pages, fix_canonical)
 
-        engine_result = run_engine(pages, clean_urls, domain, graph)
+        def engine_progress(msg):
+            if task_id: progress_store[task_id] = msg
+            time.sleep(1)
+
+        engine_result = run_engine(pages, clean_urls, domain, graph, progress_callback=engine_progress)
 
         audit = engine_result["audit"]
         fixed_urls = engine_result["fixed_urls"]
@@ -112,6 +135,8 @@ def generate(
         schema_issues = schema_results.get("issues", [])
         schema_generated = schema_results.get("schemas", {})
 
+        if task_id: progress_store[task_id] = "Writing output files..."
+        time.sleep(1.5)
         files = generate_sitemaps(fixed_urls, base_url=domain)
 
         # 🔥 DEBUG PRINT
@@ -136,6 +161,9 @@ def generate(
             "request": request,
             "error": str(e)
         })
+    finally:
+        if task_id and task_id in progress_store:
+            del progress_store[task_id]
 
 
 # -----------------------------

@@ -7,7 +7,7 @@ async def run_workers(frontier, parser, graph, limit=200, concurrency=10):
 
     results = []
 
-    async with httpx.AsyncClient(timeout=10) as client:
+    async with httpx.AsyncClient(timeout=30) as client:
 
         semaphore = asyncio.Semaphore(concurrency)
 

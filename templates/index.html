@@ -81,9 +81,18 @@
 
     <h1>Sitemap Fixer</h1>
 
+    <!-- LOADING OVERLAY -->
+    <div id="loading-overlay" style="display:none; text-align:center; padding: 40px; background: white; margin-top: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <h2>Analysis in Progress...</h2>
+        <div style="width: 100%; background: #ddd; height: 20px; border-radius: 10px; overflow: hidden; margin: 20px 0;">
+            <div id="loading-bar" style="width: 0%; height: 100%; background: #4CAF50; transition: width 0.5s;"></div>
+        </div>
+        <p id="loading-text" style="font-weight: bold; color: #555;">Starting...</p>
+    </div>
+
     <!-- FORM -->
-    <div class="card">
-        <form action="/generate" method="post">
+    <div class="card result-card" id="form-card">
+        <form id="generate-form" action="/generate" method="post">
             <label>Domain:</label>
             <input type="text" name="domain" placeholder="https://example.com" required>
 
@@ -99,14 +108,14 @@
 
     <!-- ERROR -->
     {% if error %}
-    <div class="card">
+    <div class="card result-card">
         <p style="color:red;">{{error}}</p>
     </div>
     {% endif %}
 
     <!-- SITEMAP -->
     {% if files %}
-    <div class="card">
+    <div class="card result-card">
         <h2>Sitemap Generated</h2>
         <p>Total URLs: {{count}}</p>
 
@@ -120,7 +129,7 @@
 
     <!-- SEO AUDIT -->
     {% if audit is defined %}
-    <div class="card">
+    <div class="card result-card">
 
         <h2>SEO Audit Report</h2>
 
@@ -155,12 +164,14 @@
         <!-- ISSUES -->
         <h3>Issues Found</h3>
         {% for issue, urls in audit.issues.items() %}
+            {% if urls|length > 0 %}
             <p><b>{{issue.replace("_", " ").title()}} ({{urls|length}})</b></p>
             <ul>
-                {% for url in urls[:5] %}
+                {% for url in urls %}
                     <li>{{url}}</li>
                 {% endfor %}
             </ul>
+            {% endif %}
         {% endfor %}
 
     </div>
@@ -168,7 +179,7 @@
 
     <!-- FIXES -->
     {% if fixes is defined %}
-    <div class="card">
+    <div class="card result-card">
         <h2>Fixes Applied</h2>
         <ul>
             {% for fix in fixes %}
@@ -180,5 +191,89 @@
 
 </div>
 
+<script>
+if(document.getElementById('generate-form')) {
+    document.getElementById('generate-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Hide old results if any
+        document.querySelectorAll('.result-card').forEach(el => {
+            if (el.id !== 'form-card') el.style.display = 'none';
+        });
+        
+        const overlay = document.getElementById('loading-overlay');
+        overlay.style.display = 'block';
+        
+        // Create Claude-like thinking list
+        overlay.innerHTML = `
+            <h2>Analyzing Site...</h2>
+            <ul id="thinking-steps" style="list-style: none; padding: 0; text-align: left; max-width: 400px; margin: 20px auto; font-family: monospace; font-size: 16px;">
+            </ul>
+        `;
+        
+        const taskId = Math.random().toString(36).substring(2, 15);
+        const formData = new FormData(this);
+        formData.append('task_id', taskId);
+        
+        const stepsContainer = document.getElementById('thinking-steps');
+        let knownSteps = [];
+        
+        // Start polling
+        const pollInterval = setInterval(async () => {
+            try {
+                const res = await fetch('/progress?task_id=' + taskId);
+                if (res.ok) {
+                    const data = await res.json();
+                    const status = data.status || "Starting...";
+                    
+                    if (!knownSteps.includes(status)) {
+                        // Mark previous step as done
+                        if (knownSteps.length > 0) {
+                            const lastLi = stepsContainer.lastElementChild;
+                            lastLi.innerHTML = `<span style="color: #4CAF50;">✅</span> ${knownSteps[knownSteps.length - 1]}`;
+                        }
+                        
+                        // Add new step
+                        knownSteps.push(status);
+                        const newLi = document.createElement('li');
+                        newLi.style.marginBottom = '10px';
+                        newLi.innerHTML = `<span style="display: inline-block; animation: spin 1s linear infinite;">⏳</span> ${status}`;
+                        stepsContainer.appendChild(newLi);
+                    }
+                }
+            } catch (err) {
+                console.error("Polling error:", err);
+            }
+        }, 500);
+
+        // Add CSS for spinner
+        if (!document.getElementById('spinner-style')) {
+            const style = document.createElement('style');
+            style.id = 'spinner-style';
+            style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
+            document.head.appendChild(style);
+        }
+
+        // Submit form
+        try {
+            const res = await fetch('/generate', { method: 'POST', body: formData });
+            clearInterval(pollInterval);
+            
+            if (res.ok) {
+                const html = await res.text();
+                document.open();
+                document.write(html);
+                document.close();
+            } else {
+                stepsContainer.lastElementChild.innerHTML = `<span style="color: red;">❌</span> Error occurred`;
+                document.querySelector('.result-card').style.display = 'block';
+            }
+        } catch (err) {
+            clearInterval(pollInterval);
+            stepsContainer.lastElementChild.innerHTML = `<span style="color: red;">❌</span> Network Error`;
+        }
+    });
+}
+</script>
 </body>
 </html>
