@@ -1,33 +1,58 @@
 import asyncio
 import httpx
 import time
+import base64
 from urllib.robotparser import RobotFileParser
 from urllib.parse import urlparse
 from .fetcher import fetch
+from src.config import config
+from src.utils.logger import logger
 
 
 async def run_workers(frontier, parser, graph, limit=200, concurrency=10, delay=1.0, check_robots=True):
     results = []
     rp = None
     
+    # 1. Asynchronous robots.txt handling
     if check_robots:
         try:
-            # We assume the domain is the netloc of the first URL in frontier
-            first_url = frontier.peek() if hasattr(frontier, 'peek') else next(iter(frontier.visited), None)
+            # We try to get the base domain from the first available URL
+            first_url = None
+            if hasattr(frontier, 'peek'):
+                first_url = frontier.peek()
+            
+            if not first_url and hasattr(frontier, 'visited') and frontier.visited:
+                first_url = next(iter(frontier.visited))
+
             if first_url:
                 parsed = urlparse(first_url)
                 robots_url = f"{parsed.scheme}://{parsed.netloc}/robots.txt"
-                rp = RobotFileParser()
-                rp.set_url(robots_url)
-                # Note: read() is blocking, but robots.txt is usually small.
-                # In a more robust system, we would fetch this asynchronously.
-                rp.read()
+                async with httpx.AsyncClient(timeout=10) as client:
+                    resp = await client.get(robots_url)
+                    if resp.status_code == 200:
+                        rp = RobotFileParser()
+                        rp.parse(resp.text.splitlines())
+                        logger.info(f"Loaded robots.txt from {robots_url}")
         except Exception as e:
-            print(f"Warning: Could not fetch robots.txt: {e}")
+            logger.warning(f"Could not fetch robots.txt: {e}")
+
+    # 2. Client configuration (Proxy & Auth)
+    mounts = {}
+    if config.CRAWLER_PROXY:
+        mounts = {"all://": httpx.AsyncHTTPTransport(proxy=config.CRAWLER_PROXY)}
+
+    headers = {}
+    if config.CRAWLER_BEARER_TOKEN:
+        headers["Authorization"] = f"Bearer {config.CRAWLER_BEARER_TOKEN}"
+    elif config.CRAWLER_BASIC_AUTH:
+        encoded = base64.b64encode(config.CRAWLER_BASIC_AUTH.encode()).decode()
+        headers["Authorization"] = f"Basic {encoded}"
 
     async with httpx.AsyncClient(
-        timeout=30, 
-        headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"}
+        timeout=config.CRAWL_TIMEOUT, 
+        headers=headers,
+        mounts=mounts,
+        follow_redirects=True
     ) as client:
 
         semaphore = asyncio.Semaphore(concurrency)
@@ -36,15 +61,14 @@ async def run_workers(frontier, parser, graph, limit=200, concurrency=10, delay=
             while frontier.size() and len(results) < limit:
                 url = frontier.get()
                 if not url:
-                    return
+                    break
 
                 # Robots.txt check
                 if rp and not rp.can_fetch("*", url):
-                    print(f"Skipping {url} due to robots.txt")
+                    logger.debug(f"Skipping {url} due to robots.txt")
                     continue
 
                 async with semaphore:
-                    # Rate limiting
                     if delay > 0:
                         await asyncio.sleep(delay)
                     
@@ -55,17 +79,17 @@ async def run_workers(frontier, parser, graph, limit=200, concurrency=10, delay=
 
                 results.append(page)
 
-                # Parser now returns a dict
-                extracted = parser(page["html"], page["url"])
-                
-                # Update page data with extra metadata
-                page["hreflangs"] = extracted.get("hreflangs", [])
-                page["images"] = extracted.get("images", [])
-                page["videos"] = extracted.get("videos", [])
+                # Only parse successfully fetched pages
+                if page.get("status") == 200 and page.get("html"):
+                    extracted = parser(page["html"], page["url"])
+                    
+                    page["hreflangs"] = extracted.get("hreflangs", [])
+                    page["images"] = extracted.get("images", [])
+                    page["videos"] = extracted.get("videos", [])
 
-                for link in extracted.get("links", []):
-                    graph.add_edge(page["url"], link)
-                    frontier.add(link)
+                    for link in extracted.get("links", []):
+                        graph.add_edge(page["url"], link)
+                        frontier.add(link)
 
         workers = [worker() for _ in range(concurrency)]
         await asyncio.gather(*workers)

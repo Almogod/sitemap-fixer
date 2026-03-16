@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     OLLAMA_HOST: str = os.getenv("OLLAMA_HOST", "http://localhost:11434")
     
     CRAWL_TIMEOUT: int = 30
+    CRAWLER_PROXY: Optional[str] = os.getenv("CRAWLER_PROXY", None)
+    CRAWLER_BASIC_AUTH: Optional[str] = os.getenv("CRAWLER_BASIC_AUTH", None) # user:pass
+    CRAWLER_BEARER_TOKEN: Optional[str] = os.getenv("CRAWLER_BEARER_TOKEN", None)
     
     # Storage Settings
     TASK_STORE_PATH: str = "tasks.json"

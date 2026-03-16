@@ -1,56 +1,49 @@
 from bs4 import BeautifulSoup
 from typing import Dict, Optional
 
-def detect_framework(headers: Dict[str, str], html: str) -> str:
+def detect_framework(headers: Dict[str, str], html: str, url: str = "") -> str:
     """
-    Detects the web framework used by a site.
+    Detects the web framework and specific platform patterns.
     """
-    # 1. Check headers
     server = headers.get("Server", "").lower()
     powered_by = headers.get("X-Powered-By", "").lower()
     
-    if "next.js" in powered_by or "next" in powered_by:
+    # 1. Next.js & Vercel
+    if "next.js" in powered_by or "vercel" in server:
+        if "/api/revalidate" in html or "/api/revalidate" in url:
+            return "next.js-isr"
         return "next.js"
-    if "nuxt" in powered_by:
-        return "nuxt.js"
         
-    # 2. Check HTML for specific footprint
+    # 2. Astro
+    if "astro" in html.lower() or "astro" in server:
+        return "astro"
+        
+    # 3. Webflow
+    if "webflow" in html.lower() or "webflow" in server:
+        if "/detail_" in url or "/cms/" in url:
+            return "webflow-cms"
+        return "webflow"
+        
+    # 4. Framer
+    if "framer" in html.lower() or "#" in url: # Framer often uses hash routing
+        return "framer"
+
     soup = BeautifulSoup(html, "lxml")
-    
-    # Next.js
     if soup.find("script", id="__NEXT_DATA__"):
         return "next.js"
-        
-    # Nuxt.js
     if soup.find("div", id="__nuxt"):
         return "nuxt.js"
-        
-    # Astro
     if soup.find("astro-island"):
         return "astro"
         
     return "unknown"
 
-def detect_rendering_mode(html: str) -> str:
-    """
-    Heuristic to detect if a page is SSR, static, or client-side only.
-    """
-    soup = BeautifulSoup(html, "lxml")
-    body = soup.find("body")
-    if not body:
-        return "unknown"
-        
-    # If body is mostly empty but has scripts, likely CSR
-    text_content = body.get_text(strip=True)
-    if len(text_content) < 100 and soup.find_all("script"):
-        return "client-side-only"
-        
-    return "ssr-or-static"
+def is_vercel_preview(url: str) -> bool:
+    """Detects if a URL is a Vercel preview deployment."""
+    return ".vercel.app" in url and not url.endswith("vercel.app")
 
-def validate_i18n(html: str) -> Dict[str, bool]:
-    """Checks for presence of hreflang or html lang attribute."""
-    soup = BeautifulSoup(html, "lxml")
-    return {
-        "has_lang_attr": bool(soup.find("html", lang=True)),
-        "has_hreflang": bool(soup.find("link", rel="alternate", hreflang=True))
-    }
+def get_auth_requirement(url: str) -> Optional[str]:
+    """Determines if a URL requires special authentication (e.g., Vercel Preview)."""
+    if is_vercel_preview(url):
+        return "vercel-preview-token"
+    return None

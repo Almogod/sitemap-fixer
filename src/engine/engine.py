@@ -77,11 +77,11 @@ def run_engine(pages, clean_urls, domain, graph, competitors=None, progress_call
                 context["urls"] = module_result["urls"]
 
         except Exception as e:
-
-            logger.error("Error running module %s: %s", module_name, str(e))
-
+            logger.error(f"Module {module_name} failed: {e}", exc_info=True)
             results["modules"][module_name] = {
-                "error": str(e)
+                "error": str(e),
+                "code": f"MODULE_EXECUTION_ERROR_{module_name.upper()}",
+                "context": {"module": module_name}
             }
 
     # -----------------------------

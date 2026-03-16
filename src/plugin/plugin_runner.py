@@ -58,19 +58,15 @@ def run_plugin(
     deploy_config: dict,
     llm_config: dict,
     competitors: list,
-    crawl_options: dict
+    crawl_options: dict,
+    pipeline: List[str] = ["crawl", "analyze", "generate"],
+    dry_run: bool = False
 ):
     """
-    Full autonomous SEO plugin run.
-
-    Args:
-        site_url:      Root URL of the target site
-        task_id:       Unique ID for progress tracking
-        deploy_config: Platform config for deployer (platform, credentials, etc.)
-        llm_config:    LLM config for page generation (provider, api_key, model)
-        competitors:   List of competitor domain URLs
-        crawl_options: dict with: use_js, limit, timeout
+    Autonomous SEO plugin run with configurable phases.
     """
+    from datetime import datetime
+    from src.engine.engine import run_engine
 
     def progress(msg):
         logger.info("[plugin:%s] %s", task_id, msg)
@@ -85,78 +81,104 @@ def run_plugin(
         "pages_generated": [],
         "deploy_results": [],
         "seo_score_before": None,
-        "seo_score_after": None,
-        "engine_result": None,
         "errors": [],
-        "state": "pending_approval"
+        "state": "pending_approval",
+        "dry_run": dry_run
+    }
+
+    # Shared data for output chaining between phases
+    context_data = {
+        "pages": [],
+        "clean_urls": [],
+        "domain": "",
+        "graph": None,
+        "results": {}
     }
 
     try:
-        # ─────────────────────────────────────
-        # STEP 1: CRAWL
-        # ─────────────────────────────────────
-        progress("Crawling site...")
-        pages, clean_urls, domain, graph = _crawl(site_url, crawl_options)
-        progress(f"Crawled {len(pages)} pages")
+        for phase in pipeline:
+            progress(f"Starting phase: {phase}...")
+            
+            if phase == "crawl":
+                pages, clean_urls, domain, graph = _crawl(site_url, crawl_options)
+                context_data.update({
+                    "pages": pages,
+                    "clean_urls": clean_urls,
+                    "domain": domain,
+                    "graph": graph
+                })
+                progress(f"Crawled {len(pages)} pages")
 
-        # ─────────────────────────────────────
-        # STEP 2: ANALYZE (run engine with all modules)
-        # ─────────────────────────────────────
-        progress("Running SEO analysis engine...")
-        results = run_engine(
-            pages=pages,
-            clean_urls=clean_urls,
-            domain=domain,
-            graph=graph,
-            competitors=competitors,
-            progress_callback=progress
-        )
-        report["seo_score_before"] = results.get("seo_score", 0)
-        report["engine_result"] = results
+            elif phase == "analyze":
+                if not context_data["pages"]:
+                    progress("Skipping analysis: No pages crawled.")
+                    continue
+                
+                results = run_engine(
+                    pages=context_data["pages"],
+                    clean_urls=context_data["clean_urls"],
+                    domain=context_data["domain"],
+                    graph=context_data["graph"],
+                    competitors=competitors,
+                    progress_callback=progress
+                )
+                context_data["results"] = results
+                report["seo_score_before"] = results.get("seo_score", 0)
+                report["engine_result"] = results
+                report["suggested_actions"] = results.get("actions", [])
+                progress(f"Analysis complete. Score: {report['seo_score_before']}")
+
+            elif phase == "generate":
+                if not context_data["results"]:
+                    progress("Skipping generation: No analysis results available.")
+                    continue
+                
+                keyword_gaps = _extract_keyword_gaps(context_data["results"], competitors)
+                existing_pages_list = [{"url": p["url"], "title": _get_title(p)} for p in context_data["pages"]]
+
+                if keyword_gaps and (llm_config.get("api_key") or llm_config.get("provider") == "ollama"):
+                    from src.content.competitor_analyzer import analyze_competitors
+                    from src.content.page_generator import generate_page
+
+                    for keyword in keyword_gaps[:5]:
+                        try:
+                            progress(f"Generating content for: {keyword}")
+                            brief = analyze_competitors(competitors, keyword, context_data["domain"])
+                            brief.internal_links = existing_pages_list[:10]
+                            generated = generate_page(brief, llm_config, existing_pages_list)
+
+                            report["pages_generated"].append({
+                                "keyword": keyword,
+                                "slug": generated["slug"],
+                                "title": generated["meta_title"],
+                                "word_count": generated["word_count"],
+                                "html": generated["html"],
+                                "approved": True
+                            })
+                        except Exception as e:
+                            report["errors"].append({
+                                "phase": "generate",
+                                "item": keyword,
+                                "error": str(e),
+                                "code": "GENERATION_ERROR"
+                            })
+
+        if dry_run:
+            progress("Dry run complete. No changes would be applied.")
+            report["state"] = "dry_run_completed"
+        else:
+            progress("Run complete. Waiting for user approval.")
+            task_store.set_status(task_id, "Pending Approval")
         
-        # Collect all suggested actions for user review
-        report["suggested_actions"] = results.get("actions", [])
-        
-        progress(f"SEO score analyzed: {report['seo_score_before']}")
-
-        # ─────────────────────────────────────
-        # STEP 3: GENERATE content briefs (don't deploy yet)
-        # ─────────────────────────────────────
-        keyword_gaps = _extract_keyword_gaps(results, competitors)
-        existing_pages_list = [{"url": p["url"], "title": _get_title(p)} for p in pages]
-
-        if keyword_gaps and (llm_config.get("api_key") or llm_config.get("provider") == "ollama"):
-            progress(f"Analyzing {len(keyword_gaps)} keyword gaps for content generation...")
-            from src.content.competitor_analyzer import analyze_competitors
-            from src.content.page_generator import generate_page
-
-            for keyword in keyword_gaps[:5]:  # cap at 5 new pages per run
-                try:
-                    progress(f"Generating content for keyword: {keyword}")
-                    brief = analyze_competitors(competitors, keyword, domain)
-                    brief.internal_links = existing_pages_list[:10]
-                    generated = generate_page(brief, llm_config, existing_pages_list)
-
-                    # Add to suggested pages list
-                    report["pages_generated"].append({
-                        "keyword": keyword,
-                        "slug": generated["slug"],
-                        "title": generated["meta_title"],
-                        "word_count": generated["word_count"],
-                        "html": generated["html"], # Store for deployment later
-                        "approved": True
-                    })
-
-                except Exception as e:
-                    report["errors"].append({"keyword": keyword, "error": str(e)})
-
-        progress("Analysis complete. Waiting for user approval.")
-        task_store.set_status(task_id, "Pending Approval")
         task_store.save_results(task_id, report)
 
     except Exception as e:
-        logger.error("Plugin run failed: %s", str(e))
-        report["errors"].append({"error": str(e)})
+        logger.error(f"Plugin pipeline failed: {e}", exc_info=True)
+        report["errors"].append({
+            "phase": "pipeline",
+            "error": str(e),
+            "code": "FATAL_PIPELINE_ERROR"
+        })
         task_store.set_status(task_id, f"Error: {str(e)}")
         task_store.save_results(task_id, report)
 
