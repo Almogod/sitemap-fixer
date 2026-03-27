@@ -1,0 +1,500 @@
+{
+    "status_msg": "Completed",
+    "status": "completed",
+    "results": {
+        "task_id": "dq2asltdwrw",
+        "site_url": "https://almogod.github.io/PCAcademy-/",
+        "started_at": "2026-03-27T14:08:41.780029",
+        "fixes_applied": [
+            {
+                "url": "https://almogod.github.io/PCAcademy-/",
+                "actions": 11,
+                "deploy": false
+            },
+            {
+                "url": "https://almogod.github.io/PCAcademy-/",
+                "actions": 11,
+                "deploy": true
+            }
+        ],
+        "suggested_actions": [
+            {
+                "type": "inject_schema",
+                "url": "https://almogod.github.io/PCAcademy-/",
+                "schema": {
+                    "@context": "https://schema.org",
+                    "@type": "WebPage",
+                    "name": "PCAcademy",
+                    "description": "PCAcademy - Learn Principal Component Analysis",
+                    "url": "https://almogod.github.io/PCAcademy-/"
+                }
+            },
+            {
+                "type": "heading_fix",
+                "url": "https://almogod.github.io/PCAcademy-/",
+                "fix_type": "add_h1",
+                "action": "generate_h1_from_title_or_slug"
+            },
+            {
+                "type": "inject_into_head",
+                "url": "https://almogod.github.io/PCAcademy-/",
+                "tag": "<meta property=\"og:title\" content=\"PCAcademy\">"
+            },
+            {
+                "type": "inject_into_head",
+                "url": "https://almogod.github.io/PCAcademy-/",
+                "tag": "<meta property=\"og:description\" content=\"PCAcademy - Learn Principal Component Analysis\">"
+            },
+            {
+                "type": "inject_into_head",
+                "url": "https://almogod.github.io/PCAcademy-/",
+                "tag": "<meta property=\"og:url\" content=\"https://almogod.github.io/PCAcademy-/\">"
+            },
+            {
+                "type": "inject_into_head",
+                "url": "https://almogod.github.io/PCAcademy-/",
+                "tag": "<meta property=\"og:type\" content=\"website\">"
+            },
+            {
+                "type": "inject_into_head",
+                "url": "https://almogod.github.io/PCAcademy-/",
+                "tag": "<meta name=\"twitter:card\" content=\"summary_large_image\">"
+            },
+            {
+                "type": "inject_into_head",
+                "url": "https://almogod.github.io/PCAcademy-/",
+                "tag": "<meta name=\"twitter:title\" content=\"PCAcademy\">"
+            },
+            {
+                "type": "inject_into_head",
+                "url": "https://almogod.github.io/PCAcademy-/",
+                "tag": "<meta name=\"twitter:description\" content=\"PCAcademy - Learn Principal Component Analysis\">"
+            },
+            {
+                "type": "add_canonical",
+                "url": "https://almogod.github.io/PCAcademy-/",
+                "tag": "<link rel=\"canonical\" href=\"https://almogod.github.io/PCAcademy-/\">"
+            },
+            {
+                "type": "expand_content",
+                "url": "https://almogod.github.io/PCAcademy-/",
+                "current_words": 1,
+                "target_words": 300
+            }
+        ],
+        "pages_generated": [],
+        "deploy_results": [
+            {
+                "success": false,
+                "platform": "github",
+                "file_path": "index.html",
+                "repo": "Almogod/PCAcademy-",
+                "branch": "main",
+                "message": "GitHub API error 422: {\"message\":\"Invalid request.\\n\\n\\\"sha\\\" wasn't supplied.\",\"documentation_url\":\"https://docs.github.com/rest/repos/contents#create-or-update-file-contents\",\"status\":\"422\"}"
+            },
+            {
+                "success": true,
+                "platform": "github",
+                "file_path": "index.html",
+                "repo": "Almogod/PCAcademy-",
+                "branch": "main",
+                "message": "Committed successfully"
+            }
+        ],
+        "seo_score_before": 76,
+        "errors": [],
+        "state": "completed",
+        "dry_run": false,
+        "engine_result": {
+            "audit": {
+                "total_pages_crawled": 1,
+                "total_clean_urls": 1,
+                "issues": {
+                    "excluded_from_sitemap": [
+                        "https://almogod.github.io/PCAcademy-/"
+                    ]
+                },
+                "score": 90,
+                "suggestions": [
+                    "Ensure all important pages are included in the sitemap."
+                ]
+            },
+            "plan": [
+                "internal_links",
+                "crawl_budget",
+                "canonical",
+                "robots",
+                "schema",
+                "image_seo",
+                "core_web_vitals",
+                "keyword_gap",
+                "page_speed",
+                "heading_structure",
+                "open_graph",
+                "canonical_advanced",
+                "broken_links",
+                "content_quality",
+                "mobile_seo",
+                "page_experience",
+                "structured_data_validator",
+                "hreflang"
+            ],
+            "modules": {
+                "internal_links": {
+                    "issues": {
+                        "orphan_pages": [],
+                        "low_internal_links": []
+                    },
+                    "suggestions": {}
+                },
+                "crawl_budget": {
+                    "issues": {
+                        "deep_pages": [],
+                        "wasted_crawl_budget": []
+                    },
+                    "suggestions": []
+                },
+                "canonical": {
+                    "urls": [
+                        "https://almogod.github.io/PCAcademy-"
+                    ]
+                },
+                "robots": {
+                    "status": "success",
+                    "issues": [
+                        {
+                            "issue": "missing_sitemap_in_robots",
+                            "suggested_sitemap": "https://almogod.github.io/sitemap.xml"
+                        }
+                    ],
+                    "current_content": "",
+                    "new_content": "User-agent: *\nAllow: /\n\nSitemap: https://almogod.github.io/sitemap.xml"
+                },
+                "schema": {
+                    "issues": [
+                        {
+                            "url": "https://almogod.github.io/PCAcademy-/",
+                            "issue": "missing_schema"
+                        }
+                    ],
+                    "schemas": {
+                        "https://almogod.github.io/PCAcademy-/": {
+                            "@context": "https://schema.org",
+                            "@type": "WebPage",
+                            "name": "PCAcademy",
+                            "description": "PCAcademy - Learn Principal Component Analysis",
+                            "url": "https://almogod.github.io/PCAcademy-/"
+                        }
+                    }
+                },
+                "image_seo": {
+                    "issues": [],
+                    "fixes": {}
+                },
+                "core_web_vitals": {
+                    "issues": [],
+                    "suggestions": {}
+                },
+                "keyword_gap": {
+                    "site_keywords": [
+                        "pcacademy"
+                    ],
+                    "competitor_keywords": {},
+                    "keyword_gap": {}
+                },
+                "page_speed": {
+                    "issues": [],
+                    "suggestions": {}
+                },
+                "heading_structure": {
+                    "issues": [
+                        {
+                            "url": "https://almogod.github.io/PCAcademy-/",
+                            "issue": "missing_h1"
+                        }
+                    ],
+                    "suggestions": {
+                        "https://almogod.github.io/PCAcademy-/": [
+                            {
+                                "type": "add_h1",
+                                "action": "generate_h1_from_title_or_slug"
+                            }
+                        ]
+                    }
+                },
+                "open_graph": {
+                    "issues": [
+                        {
+                            "url": "https://almogod.github.io/PCAcademy-/",
+                            "issue": "missing_og_title"
+                        },
+                        {
+                            "url": "https://almogod.github.io/PCAcademy-/",
+                            "issue": "missing_og_description"
+                        },
+                        {
+                            "url": "https://almogod.github.io/PCAcademy-/",
+                            "issue": "missing_og_url"
+                        },
+                        {
+                            "url": "https://almogod.github.io/PCAcademy-/",
+                            "issue": "missing_og_type"
+                        },
+                        {
+                            "url": "https://almogod.github.io/PCAcademy-/",
+                            "issue": "missing_og_image"
+                        },
+                        {
+                            "url": "https://almogod.github.io/PCAcademy-/",
+                            "issue": "missing_twitter_card"
+                        },
+                        {
+                            "url": "https://almogod.github.io/PCAcademy-/",
+                            "issue": "missing_twitter_title"
+                        },
+                        {
+                            "url": "https://almogod.github.io/PCAcademy-/",
+                            "issue": "missing_twitter_description"
+                        },
+                        {
+                            "url": "https://almogod.github.io/PCAcademy-/",
+                            "issue": "missing_twitter_image"
+                        }
+                    ],
+                    "suggestions": {
+                        "https://almogod.github.io/PCAcademy-/": [
+                            {
+                                "type": "add_og_tag",
+                                "tag": "<meta property=\"og:title\" content=\"PCAcademy\">",
+                                "action": "inject_into_head"
+                            },
+                            {
+                                "type": "add_og_tag",
+                                "tag": "<meta property=\"og:description\" content=\"PCAcademy - Learn Principal Component Analysis\">",
+                                "action": "inject_into_head"
+                            },
+                            {
+                                "type": "add_og_tag",
+                                "tag": "<meta property=\"og:url\" content=\"https://almogod.github.io/PCAcademy-/\">",
+                                "action": "inject_into_head"
+                            },
+                            {
+                                "type": "add_og_tag",
+                                "tag": "<meta property=\"og:type\" content=\"website\">",
+                                "action": "inject_into_head"
+                            },
+                            {
+                                "type": "add_twitter_tag",
+                                "tag": "<meta name=\"twitter:card\" content=\"summary_large_image\">",
+                                "action": "inject_into_head"
+                            },
+                            {
+                                "type": "add_twitter_tag",
+                                "tag": "<meta name=\"twitter:title\" content=\"PCAcademy\">",
+                                "action": "inject_into_head"
+                            },
+                            {
+                                "type": "add_twitter_tag",
+                                "tag": "<meta name=\"twitter:description\" content=\"PCAcademy - Learn Principal Component Analysis\">",
+                                "action": "inject_into_head"
+                            }
+                        ]
+                    }
+                },
+                "canonical_advanced": {
+                    "issues": [
+                        {
+                            "url": "https://almogod.github.io/PCAcademy-/",
+                            "issue": "missing_canonical"
+                        }
+                    ],
+                    "suggestions": {
+                        "https://almogod.github.io/PCAcademy-/": [
+                            {
+                                "type": "add_canonical",
+                                "tag": "<link rel=\"canonical\" href=\"https://almogod.github.io/PCAcademy-/\">",
+                                "action": "inject_into_head"
+                            }
+                        ]
+                    }
+                },
+                "broken_links": {
+                    "issues": [],
+                    "suggestions": {}
+                },
+                "content_quality": {
+                    "issues": [
+                        {
+                            "url": "https://almogod.github.io/PCAcademy-/",
+                            "issue": "thin_content",
+                            "word_count": 1
+                        },
+                        {
+                            "url": "https://almogod.github.io/PCAcademy-/",
+                            "issue": "keyword_stuffing",
+                            "keyword": "pcacademy",
+                            "density": 100.0
+                        }
+                    ],
+                    "suggestions": {
+                        "https://almogod.github.io/PCAcademy-/": [
+                            {
+                                "type": "expand_content",
+                                "current_words": 1,
+                                "target_words": 300,
+                                "action": "generate_additional_content_for_page"
+                            },
+                            {
+                                "type": "reduce_keyword_density",
+                                "keyword": "pcacademy",
+                                "action": "replace_some_instances_with_synonyms"
+                            }
+                        ]
+                    }
+                },
+                "mobile_seo": {
+                    "issues": [],
+                    "suggestions": {}
+                },
+                "page_experience": {
+                    "issues": [
+                        {
+                            "url": "https://almogod.github.io/PCAcademy-/",
+                            "issue": "missing_x_frame_options"
+                        }
+                    ],
+                    "suggestions": {
+                        "https://almogod.github.io/PCAcademy-/": [
+                            {
+                                "type": "add_security_header",
+                                "header": "X-Frame-Options: SAMEORIGIN",
+                                "action": "configure_in_server_or_cdn"
+                            }
+                        ]
+                    }
+                },
+                "structured_data_validator": {
+                    "issues": [],
+                    "suggestions": {
+                        "https://almogod.github.io/PCAcademy-/": [
+                            {
+                                "type": "inject_breadcrumb_schema",
+                                "schema": {
+                                    "@context": "https://schema.org",
+                                    "@type": "BreadcrumbList",
+                                    "itemListElement": [
+                                        {
+                                            "@type": "ListItem",
+                                            "position": 1,
+                                            "name": "Home",
+                                            "item": "almogod.github.io"
+                                        },
+                                        {
+                                            "@type": "ListItem",
+                                            "position": 2,
+                                            "name": "Https:",
+                                            "item": "almogod.github.io/https:"
+                                        },
+                                        {
+                                            "@type": "ListItem",
+                                            "position": 3,
+                                            "name": "Pcacademy ",
+                                            "item": "almogod.github.io/https:/PCAcademy-"
+                                        }
+                                    ]
+                                },
+                                "action": "inject_breadcrumb_json_ld_into_head"
+                            }
+                        ]
+                    }
+                },
+                "hreflang": {
+                    "issues": [],
+                    "suggestions": {}
+                }
+            },
+            "fixed_urls": [
+                "https://almogod.github.io/PCAcademy-"
+            ],
+            "strategy": [
+                "internal_links",
+                "crawl_budget",
+                "robots",
+                "schema",
+                "heading_structure",
+                "open_graph",
+                "canonical_advanced",
+                "content_quality",
+                "page_experience"
+            ],
+            "actions": [
+                {
+                    "type": "inject_schema",
+                    "url": "https://almogod.github.io/PCAcademy-/",
+                    "schema": {
+                        "@context": "https://schema.org",
+                        "@type": "WebPage",
+                        "name": "PCAcademy",
+                        "description": "PCAcademy - Learn Principal Component Analysis",
+                        "url": "https://almogod.github.io/PCAcademy-/"
+                    }
+                },
+                {
+                    "type": "heading_fix",
+                    "url": "https://almogod.github.io/PCAcademy-/",
+                    "fix_type": "add_h1",
+                    "action": "generate_h1_from_title_or_slug"
+                },
+                {
+                    "type": "inject_into_head",
+                    "url": "https://almogod.github.io/PCAcademy-/",
+                    "tag": "<meta property=\"og:title\" content=\"PCAcademy\">"
+                },
+                {
+                    "type": "inject_into_head",
+                    "url": "https://almogod.github.io/PCAcademy-/",
+                    "tag": "<meta property=\"og:description\" content=\"PCAcademy - Learn Principal Component Analysis\">"
+                },
+                {
+                    "type": "inject_into_head",
+                    "url": "https://almogod.github.io/PCAcademy-/",
+                    "tag": "<meta property=\"og:url\" content=\"https://almogod.github.io/PCAcademy-/\">"
+                },
+                {
+                    "type": "inject_into_head",
+                    "url": "https://almogod.github.io/PCAcademy-/",
+                    "tag": "<meta property=\"og:type\" content=\"website\">"
+                },
+                {
+                    "type": "inject_into_head",
+                    "url": "https://almogod.github.io/PCAcademy-/",
+                    "tag": "<meta name=\"twitter:card\" content=\"summary_large_image\">"
+                },
+                {
+                    "type": "inject_into_head",
+                    "url": "https://almogod.github.io/PCAcademy-/",
+                    "tag": "<meta name=\"twitter:title\" content=\"PCAcademy\">"
+                },
+                {
+                    "type": "inject_into_head",
+                    "url": "https://almogod.github.io/PCAcademy-/",
+                    "tag": "<meta name=\"twitter:description\" content=\"PCAcademy - Learn Principal Component Analysis\">"
+                },
+                {
+                    "type": "add_canonical",
+                    "url": "https://almogod.github.io/PCAcademy-/",
+                    "tag": "<link rel=\"canonical\" href=\"https://almogod.github.io/PCAcademy-/\">"
+                },
+                {
+                    "type": "expand_content",
+                    "url": "https://almogod.github.io/PCAcademy-/",
+                    "current_words": 1,
+                    "target_words": 300
+                }
+            ],
+            "seo_score": 76
+        },
+        "seo_score_after": 80,
+        "completed_at": "2026-03-27T14:11:35.730335"
+    }
+}

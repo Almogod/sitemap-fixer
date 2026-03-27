@@ -76,16 +76,18 @@ def _deploy_github(file_path: str, content: str, config: dict) -> dict:
     import httpx
 
     token = config.get("github_token") or os.environ.get("GITHUB_TOKEN", "")
-    repo = config.get("github_repo", "")  # format: "owner/repo"
+    repo = config.get("github_repo", "").strip().replace("https://github.com/", "").strip("/")
     branch = config.get("github_branch", "main")
     commit_message = config.get("commit_message", f"SEO plugin: update {file_path}")
 
     if not token or not repo:
         raise ValueError("github_token and github_repo are required for GitHub deployment")
+    
+    logger.info(f"GitHub Deploy: repo={repo}, branch={branch}, file={file_path}")
 
     api_url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
     headers = {
-        "Authorization": f"Bearer {token}",
+        "Authorization": f"Bearer {token.strip()}",
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28"
     }
@@ -93,9 +95,30 @@ def _deploy_github(file_path: str, content: str, config: dict) -> dict:
     # Check if file exists to get its SHA
     sha = None
     with httpx.Client() as client:
-        existing = client.get(api_url, headers=headers, params={"ref": branch})
-        if existing.status_code == 200:
-            sha = existing.json().get("sha")
+        try:
+            # Try direct GET first
+            existing = client.get(api_url, headers=headers, params={"ref": branch})
+            if existing.status_code == 200:
+                sha = existing.json().get("sha")
+            elif existing.status_code == 404:
+                # Fallback: Check parent directory if file is in root or subdir
+                parent_path = str(Path(file_path).parent).replace("\\", "/")
+                if parent_path == ".":
+                    parent_path = ""
+                
+                parent_url = f"https://api.github.com/repos/{repo}/contents/{parent_path}"
+                logger.info(f"File 404'd, checking parent listing: {parent_url}")
+                dir_res = client.get(parent_url, headers=headers, params={"ref": branch})
+                if dir_res.status_code == 200:
+                    for item in dir_res.json():
+                        if item["name"].lower() == Path(file_path).name.lower():
+                            sha = item["sha"]
+                            logger.info(f"Found SHA via parent listing: {sha}")
+                            break
+            else:
+                logger.warning(f"Unexpected status checking file existence: {existing.status_code} - {existing.text}")
+        except Exception as e:
+            logger.warning(f"Error checking file existence: {e}")
 
         encoded = base64.b64encode(content.encode("utf-8")).decode("utf-8")
         payload = {
@@ -107,7 +130,17 @@ def _deploy_github(file_path: str, content: str, config: dict) -> dict:
             payload["sha"] = sha
 
         response = client.put(api_url, headers=headers, json=payload)
-        response.raise_for_status()
+        if response.status_code >= 400:
+            err_msg = f"GitHub API error {response.status_code}: {response.text}"
+            logger.error(err_msg)
+            return {
+                "success": False,
+                "platform": "github",
+                "file_path": file_path,
+                "repo": repo,
+                "branch": branch,
+                "message": err_msg
+            }
 
     return {
         "success": True,

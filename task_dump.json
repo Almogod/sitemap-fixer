@@ -1,0 +1,1963 @@
+{
+    "status_msg": "Failed to generate content for solution: [WinError 10061] No connection could be made because the target machine actively refused it",
+    "status": "running",
+    "results": {
+        "task_id": "s79l8haujzh",
+        "site_url": "https://www.qcecuring.com/",
+        "started_at": "2026-03-15T13:55:50.562399",
+        "fixes_applied": [],
+        "suggested_actions": [
+            {
+                "type": "inject_schema",
+                "url": "https://www.qcecuring.com/",
+                "schema": {
+                    "@context": "https://schema.org",
+                    "@type": "WebPage",
+                    "name": "QCecuring - Enterprise Security Solutions",
+                    "description": "QCecuring - Enterprise Security Solutions for certificate management, Code Signing, SSH Key Management, and HSM Services",
+                    "url": "https://www.qcecuring.com/"
+                }
+            },
+            {
+                "type": "add_lazy_loading",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/brand/qcecuring-technologies.svg",
+                "value": "loading='lazy'"
+            },
+            {
+                "type": "add_lazy_loading",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/homepage/hersection.png",
+                "value": "loading='lazy'"
+            },
+            {
+                "type": "rename_image",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/homepage/SSL-CLM.png",
+                "value": "ssl-clm.png"
+            },
+            {
+                "type": "rename_image",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/homepage/code_sign.png",
+                "value": "code-sign.png"
+            },
+            {
+                "type": "rename_image",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/homepage/PKI.png",
+                "value": "pki.png"
+            },
+            {
+                "type": "add_lazy_loading",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/webinar/image1.png",
+                "value": "loading='lazy'"
+            },
+            {
+                "type": "add_lazy_loading",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/posts/dhkersa-title-banner.png",
+                "value": "loading='lazy'"
+            },
+            {
+                "type": "add_lazy_loading",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/posts/rpc-server-error.jpg",
+                "value": "loading='lazy'"
+            },
+            {
+                "type": "add_lazy_loading",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/posts/3des-retirement.jpg",
+                "value": "loading='lazy'"
+            },
+            {
+                "type": "add_lazy_loading",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/posts/nist-1800-16-banner.jpg",
+                "value": "loading='lazy'"
+            },
+            {
+                "type": "add_lazy_loading",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/posts/microsoft-certificate-mapping.jpg",
+                "value": "loading='lazy'"
+            },
+            {
+                "type": "add_lazy_loading",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/posts/tls-1.2-and-tls-1.3.png",
+                "value": "loading='lazy'"
+            },
+            {
+                "type": "add_lazy_loading",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/brand/qcecuring-technologies-white.svg",
+                "value": "loading='lazy'"
+            },
+            {
+                "type": "add_lazy_loading",
+                "url": "https://www.qcecuring.com/",
+                "image": "/assets/icons/svg/linkedin.svg",
+                "value": "loading='lazy'"
+            },
+            {
+                "type": "add_lazy_loading",
+                "url": "https://www.qcecuring.com/",
+                "image": "/assets/icons/svg/youtube.svg",
+                "value": "loading='lazy'"
+            },
+            {
+                "type": "add_lazy_loading",
+                "url": "https://www.qcecuring.com/",
+                "image": "/assets/icons/svg/github.svg",
+                "value": "loading='lazy'"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/brand/qcecuring-technologies.svg"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/homepage/hersection.png"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/homepage/SSL-CLM.png"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/homepage/code_sign.png"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/homepage/ssh.png"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/homepage/hsm.png"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/homepage/PKI.png"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/homepage/cloud.png"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/webinar/image1.png"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/posts/dhkersa-title-banner.png"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/posts/rpc-server-error.jpg"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/posts/3des-retirement.jpg"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/posts/nist-1800-16-banner.jpg"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/posts/microsoft-certificate-mapping.jpg"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/posts/tls-1.2-and-tls-1.3.png"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/images/brand/qcecuring-technologies-white.svg"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/assets/icons/svg/linkedin.svg"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/assets/icons/svg/youtube.svg"
+            },
+            {
+                "type": "add_image_dimensions",
+                "url": "https://www.qcecuring.com/",
+                "image": "/assets/icons/svg/github.svg"
+            },
+            {
+                "type": "defer_script",
+                "url": "https://www.qcecuring.com/",
+                "script": "/_astro/ClientRouter.astro_astro_type_script_index_0_lang.DZnDNxNb.js"
+            },
+            {
+                "type": "defer_script",
+                "url": "https://www.qcecuring.com/",
+                "script": "/bp-inject.js"
+            },
+            {
+                "type": "inject_into_head",
+                "url": "https://www.qcecuring.com/",
+                "tag": "<meta charset=\"UTF-8\">"
+            },
+            {
+                "type": "inject_faq_schema",
+                "url": "https://www.qcecuring.com/",
+                "schema": {
+                    "@context": "https://schema.org",
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        {
+                            "@type": "Question",
+                            "name": "Ready to Secure Your Enterprise?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Experience how our cryptographic solutions simplify, centralize, and automate \n        identity management for your entire organization."
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "pages_generated": [],
+        "deploy_results": [],
+        "seo_score_before": 76,
+        "seo_score_after": null,
+        "engine_result": {
+            "audit": {
+                "total_pages_crawled": 1,
+                "total_clean_urls": 0,
+                "issues": {
+                    "excluded_from_sitemap": [
+                        "https://www.qcecuring.com/"
+                    ]
+                },
+                "score": 90,
+                "suggestions": [
+                    "Ensure all important pages are included in the sitemap."
+                ]
+            },
+            "plan": [
+                "internal_links",
+                "crawl_budget",
+                "canonical",
+                "robots",
+                "schema",
+                "image_seo",
+                "core_web_vitals",
+                "keyword_gap",
+                "page_speed",
+                "heading_structure",
+                "open_graph",
+                "canonical_advanced",
+                "broken_links",
+                "content_quality",
+                "mobile_seo",
+                "page_experience",
+                "structured_data_validator",
+                "hreflang"
+            ],
+            "modules": {
+                "internal_links": {
+                    "issues": {
+                        "orphan_pages": [],
+                        "low_internal_links": [
+                            "https://www.qcecuring.com/",
+                            "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                            "https://www.qcecuring.com/product/ssh-key-management",
+                            "https://www.qcecuring.com/product/code-signing",
+                            "https://www.qcecuring.com/product/hsm-as-a-service",
+                            "https://www.qcecuring.com/product/pki-as-a-service",
+                            "https://www.qcecuring.com/product/cloud-native-machine-identity",
+                            "https://www.qcecuring.com/about",
+                            "https://www.qcecuring.com/careers",
+                            "https://www.qcecuring.com/blog",
+                            "https://www.qcecuring.com/education",
+                            "https://www.qcecuring.com/product-sheets",
+                            "https://www.qcecuring.com/webinars",
+                            "https://docs.qcecuring.com",
+                            "https://www.qcecuring.com/integrations",
+                            "https://www.qcecuring.com/legal/privacy-policy",
+                            "https://www.qcecuring.com/legal/terms-of-service",
+                            "https://www.qcecuring.com/legal/service-level-agreement",
+                            "https://www.qcecuring.com/contact",
+                            "https://www.qcecuring.com/request-demo",
+                            "https://www.qcecuring.com/webinars/why-dont-you-protect",
+                            "https://www.qcecuring.com/blog/diffie-hellman-vs-rsa",
+                            "https://www.qcecuring.com/blog/rpc-server-unavailable-error",
+                            "https://www.qcecuring.com/blog/3des-retirement-triple-des-deprecated",
+                            "https://www.qcecuring.com/blog/nist-sp-1800-16",
+                            "https://www.qcecuring.com/blog/microsoft-strong-certificate-mapping",
+                            "https://www.qcecuring.com/blog/tls-12-and-tls-13",
+                            "https://www.linkedin.com/company/qcecuring/",
+                            "https://www.youtube.com/@qcecuring",
+                            "https://www.github.com/qcecuring"
+                        ]
+                    },
+                    "suggestions": {
+                        "https://www.qcecuring.com/": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/"
+                            }
+                        ],
+                        "https://www.qcecuring.com/product/certificate-lifecycle-management": [
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/product/certificate-lifecycle-management"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/product/certificate-lifecycle-management"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/product/certificate-lifecycle-management"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/product/certificate-lifecycle-management"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/cloud-native-machine-identity",
+                                "to": "https://www.qcecuring.com/product/certificate-lifecycle-management"
+                            }
+                        ],
+                        "https://www.qcecuring.com/product/ssh-key-management": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/product/ssh-key-management"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/product/ssh-key-management"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/product/ssh-key-management"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/product/ssh-key-management"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/cloud-native-machine-identity",
+                                "to": "https://www.qcecuring.com/product/ssh-key-management"
+                            }
+                        ],
+                        "https://www.qcecuring.com/product/code-signing": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/product/code-signing"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/product/code-signing"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/product/code-signing"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/product/code-signing"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/cloud-native-machine-identity",
+                                "to": "https://www.qcecuring.com/product/code-signing"
+                            }
+                        ],
+                        "https://www.qcecuring.com/product/hsm-as-a-service": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/product/hsm-as-a-service"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/product/hsm-as-a-service"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/product/hsm-as-a-service"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/product/hsm-as-a-service"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/cloud-native-machine-identity",
+                                "to": "https://www.qcecuring.com/product/hsm-as-a-service"
+                            }
+                        ],
+                        "https://www.qcecuring.com/product/pki-as-a-service": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/product/pki-as-a-service"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/product/pki-as-a-service"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/product/pki-as-a-service"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/product/pki-as-a-service"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/cloud-native-machine-identity",
+                                "to": "https://www.qcecuring.com/product/pki-as-a-service"
+                            }
+                        ],
+                        "https://www.qcecuring.com/product/cloud-native-machine-identity": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/product/cloud-native-machine-identity"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/product/cloud-native-machine-identity"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/product/cloud-native-machine-identity"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/product/cloud-native-machine-identity"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/product/cloud-native-machine-identity"
+                            }
+                        ],
+                        "https://www.qcecuring.com/about": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/about"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/about"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/about"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/about"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/about"
+                            }
+                        ],
+                        "https://www.qcecuring.com/careers": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/careers"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/careers"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/careers"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/careers"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/careers"
+                            }
+                        ],
+                        "https://www.qcecuring.com/blog": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/blog"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/blog"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/blog"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/blog"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/blog"
+                            }
+                        ],
+                        "https://www.qcecuring.com/education": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/education"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/education"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/education"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/education"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/education"
+                            }
+                        ],
+                        "https://www.qcecuring.com/product-sheets": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/product-sheets"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/product-sheets"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/product-sheets"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/product-sheets"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/product-sheets"
+                            }
+                        ],
+                        "https://www.qcecuring.com/webinars": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/webinars"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/webinars"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/webinars"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/webinars"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/webinars"
+                            }
+                        ],
+                        "https://docs.qcecuring.com": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://docs.qcecuring.com"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://docs.qcecuring.com"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://docs.qcecuring.com"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://docs.qcecuring.com"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://docs.qcecuring.com"
+                            }
+                        ],
+                        "https://www.qcecuring.com/integrations": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/integrations"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/integrations"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/integrations"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/integrations"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/integrations"
+                            }
+                        ],
+                        "https://www.qcecuring.com/legal/privacy-policy": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/legal/privacy-policy"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/legal/privacy-policy"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/legal/privacy-policy"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/legal/privacy-policy"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/legal/privacy-policy"
+                            }
+                        ],
+                        "https://www.qcecuring.com/legal/terms-of-service": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/legal/terms-of-service"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/legal/terms-of-service"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/legal/terms-of-service"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/legal/terms-of-service"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/legal/terms-of-service"
+                            }
+                        ],
+                        "https://www.qcecuring.com/legal/service-level-agreement": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/legal/service-level-agreement"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/legal/service-level-agreement"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/legal/service-level-agreement"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/legal/service-level-agreement"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/legal/service-level-agreement"
+                            }
+                        ],
+                        "https://www.qcecuring.com/contact": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/contact"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/contact"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/contact"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/contact"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/contact"
+                            }
+                        ],
+                        "https://www.qcecuring.com/request-demo": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/request-demo"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/request-demo"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/request-demo"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/request-demo"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/request-demo"
+                            }
+                        ],
+                        "https://www.qcecuring.com/webinars/why-dont-you-protect": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/webinars/why-dont-you-protect"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/webinars/why-dont-you-protect"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/webinars/why-dont-you-protect"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/webinars/why-dont-you-protect"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/webinars/why-dont-you-protect"
+                            }
+                        ],
+                        "https://www.qcecuring.com/blog/diffie-hellman-vs-rsa": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/blog/diffie-hellman-vs-rsa"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/blog/diffie-hellman-vs-rsa"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/blog/diffie-hellman-vs-rsa"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/blog/diffie-hellman-vs-rsa"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/blog/diffie-hellman-vs-rsa"
+                            }
+                        ],
+                        "https://www.qcecuring.com/blog/rpc-server-unavailable-error": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/blog/rpc-server-unavailable-error"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/blog/rpc-server-unavailable-error"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/blog/rpc-server-unavailable-error"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/blog/rpc-server-unavailable-error"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/blog/rpc-server-unavailable-error"
+                            }
+                        ],
+                        "https://www.qcecuring.com/blog/3des-retirement-triple-des-deprecated": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/blog/3des-retirement-triple-des-deprecated"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/blog/3des-retirement-triple-des-deprecated"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/blog/3des-retirement-triple-des-deprecated"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/blog/3des-retirement-triple-des-deprecated"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/blog/3des-retirement-triple-des-deprecated"
+                            }
+                        ],
+                        "https://www.qcecuring.com/blog/nist-sp-1800-16": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/blog/nist-sp-1800-16"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/blog/nist-sp-1800-16"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/blog/nist-sp-1800-16"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/blog/nist-sp-1800-16"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/blog/nist-sp-1800-16"
+                            }
+                        ],
+                        "https://www.qcecuring.com/blog/microsoft-strong-certificate-mapping": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/blog/microsoft-strong-certificate-mapping"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/blog/microsoft-strong-certificate-mapping"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/blog/microsoft-strong-certificate-mapping"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/blog/microsoft-strong-certificate-mapping"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/blog/microsoft-strong-certificate-mapping"
+                            }
+                        ],
+                        "https://www.qcecuring.com/blog/tls-12-and-tls-13": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.qcecuring.com/blog/tls-12-and-tls-13"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.qcecuring.com/blog/tls-12-and-tls-13"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.qcecuring.com/blog/tls-12-and-tls-13"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.qcecuring.com/blog/tls-12-and-tls-13"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.qcecuring.com/blog/tls-12-and-tls-13"
+                            }
+                        ],
+                        "https://www.linkedin.com/company/qcecuring/": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.linkedin.com/company/qcecuring/"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.linkedin.com/company/qcecuring/"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.linkedin.com/company/qcecuring/"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.linkedin.com/company/qcecuring/"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.linkedin.com/company/qcecuring/"
+                            }
+                        ],
+                        "https://www.youtube.com/@qcecuring": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.youtube.com/@qcecuring"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.youtube.com/@qcecuring"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.youtube.com/@qcecuring"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.youtube.com/@qcecuring"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.youtube.com/@qcecuring"
+                            }
+                        ],
+                        "https://www.github.com/qcecuring": [
+                            {
+                                "from": "https://www.qcecuring.com/product/certificate-lifecycle-management",
+                                "to": "https://www.github.com/qcecuring"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/ssh-key-management",
+                                "to": "https://www.github.com/qcecuring"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/code-signing",
+                                "to": "https://www.github.com/qcecuring"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/hsm-as-a-service",
+                                "to": "https://www.github.com/qcecuring"
+                            },
+                            {
+                                "from": "https://www.qcecuring.com/product/pki-as-a-service",
+                                "to": "https://www.github.com/qcecuring"
+                            }
+                        ]
+                    }
+                },
+                "crawl_budget": {
+                    "issues": {
+                        "deep_pages": [],
+                        "wasted_crawl_budget": []
+                    },
+                    "suggestions": []
+                },
+                "canonical": {
+                    "urls": []
+                },
+                "robots": {
+                    "status": "success"
+                },
+                "schema": {
+                    "issues": [
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_schema"
+                        }
+                    ],
+                    "schemas": {
+                        "https://www.qcecuring.com/": {
+                            "@context": "https://schema.org",
+                            "@type": "WebPage",
+                            "name": "QCecuring - Enterprise Security Solutions",
+                            "description": "QCecuring - Enterprise Security Solutions for certificate management, Code Signing, SSH Key Management, and HSM Services",
+                            "url": "https://www.qcecuring.com/"
+                        }
+                    }
+                },
+                "image_seo": {
+                    "issues": [
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "bad_filename",
+                            "image": "/images/homepage/SSL-CLM.png"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "bad_filename",
+                            "image": "/images/homepage/code_sign.png"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "bad_filename",
+                            "image": "/images/homepage/PKI.png"
+                        }
+                    ],
+                    "fixes": {
+                        "https://www.qcecuring.com/": [
+                            {
+                                "image": "/images/brand/qcecuring-technologies.svg",
+                                "fix": "add_lazy_loading",
+                                "value": "loading='lazy'"
+                            },
+                            {
+                                "image": "/images/homepage/hersection.png",
+                                "fix": "add_lazy_loading",
+                                "value": "loading='lazy'"
+                            },
+                            {
+                                "image": "/images/homepage/SSL-CLM.png",
+                                "fix": "rename_image",
+                                "value": "ssl-clm.png"
+                            },
+                            {
+                                "image": "/images/homepage/code_sign.png",
+                                "fix": "rename_image",
+                                "value": "code-sign.png"
+                            },
+                            {
+                                "image": "/images/homepage/PKI.png",
+                                "fix": "rename_image",
+                                "value": "pki.png"
+                            },
+                            {
+                                "image": "/images/webinar/image1.png",
+                                "fix": "add_lazy_loading",
+                                "value": "loading='lazy'"
+                            },
+                            {
+                                "image": "/images/posts/dhkersa-title-banner.png",
+                                "fix": "add_lazy_loading",
+                                "value": "loading='lazy'"
+                            },
+                            {
+                                "image": "/images/posts/rpc-server-error.jpg",
+                                "fix": "add_lazy_loading",
+                                "value": "loading='lazy'"
+                            },
+                            {
+                                "image": "/images/posts/3des-retirement.jpg",
+                                "fix": "add_lazy_loading",
+                                "value": "loading='lazy'"
+                            },
+                            {
+                                "image": "/images/posts/nist-1800-16-banner.jpg",
+                                "fix": "add_lazy_loading",
+                                "value": "loading='lazy'"
+                            },
+                            {
+                                "image": "/images/posts/microsoft-certificate-mapping.jpg",
+                                "fix": "add_lazy_loading",
+                                "value": "loading='lazy'"
+                            },
+                            {
+                                "image": "/images/posts/tls-1.2-and-tls-1.3.png",
+                                "fix": "add_lazy_loading",
+                                "value": "loading='lazy'"
+                            },
+                            {
+                                "image": "/images/brand/qcecuring-technologies-white.svg",
+                                "fix": "add_lazy_loading",
+                                "value": "loading='lazy'"
+                            },
+                            {
+                                "image": "/assets/icons/svg/linkedin.svg",
+                                "fix": "add_lazy_loading",
+                                "value": "loading='lazy'"
+                            },
+                            {
+                                "image": "/assets/icons/svg/youtube.svg",
+                                "fix": "add_lazy_loading",
+                                "value": "loading='lazy'"
+                            },
+                            {
+                                "image": "/assets/icons/svg/github.svg",
+                                "fix": "add_lazy_loading",
+                                "value": "loading='lazy'"
+                            }
+                        ]
+                    }
+                },
+                "core_web_vitals": {
+                    "issues": [
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/images/brand/qcecuring-technologies.svg"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/images/homepage/hersection.png"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/images/homepage/SSL-CLM.png"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/images/homepage/code_sign.png"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/images/homepage/ssh.png"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/images/homepage/hsm.png"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/images/homepage/PKI.png"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/images/homepage/cloud.png"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/images/webinar/image1.png"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/images/posts/dhkersa-title-banner.png"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/images/posts/rpc-server-error.jpg"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/images/posts/3des-retirement.jpg"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/images/posts/nist-1800-16-banner.jpg"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/images/posts/microsoft-certificate-mapping.jpg"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/images/posts/tls-1.2-and-tls-1.3.png"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/images/brand/qcecuring-technologies-white.svg"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/assets/icons/svg/linkedin.svg"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/assets/icons/svg/youtube.svg"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_image_dimensions",
+                            "image": "/assets/icons/svg/github.svg"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "blocking_js",
+                            "script": "/_astro/ClientRouter.astro_astro_type_script_index_0_lang.DZnDNxNb.js"
+                        },
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "blocking_js",
+                            "script": "/bp-inject.js"
+                        }
+                    ],
+                    "suggestions": {
+                        "https://www.qcecuring.com/": [
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/images/brand/qcecuring-technologies.svg"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/images/homepage/hersection.png"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/images/homepage/SSL-CLM.png"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/images/homepage/code_sign.png"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/images/homepage/ssh.png"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/images/homepage/hsm.png"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/images/homepage/PKI.png"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/images/homepage/cloud.png"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/images/webinar/image1.png"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/images/posts/dhkersa-title-banner.png"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/images/posts/rpc-server-error.jpg"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/images/posts/3des-retirement.jpg"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/images/posts/nist-1800-16-banner.jpg"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/images/posts/microsoft-certificate-mapping.jpg"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/images/posts/tls-1.2-and-tls-1.3.png"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/images/brand/qcecuring-technologies-white.svg"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/assets/icons/svg/linkedin.svg"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/assets/icons/svg/youtube.svg"
+                            },
+                            {
+                                "type": "add_image_dimensions",
+                                "image": "/assets/icons/svg/github.svg"
+                            },
+                            {
+                                "type": "defer_script",
+                                "script": "/_astro/ClientRouter.astro_astro_type_script_index_0_lang.DZnDNxNb.js"
+                            },
+                            {
+                                "type": "defer_script",
+                                "script": "/bp-inject.js"
+                            }
+                        ]
+                    }
+                },
+                "keyword_gap": {
+                    "site_keywords": [
+                        "security",
+                        "certificate",
+                        "enterprise",
+                        "management",
+                        "service",
+                        "lifecycle",
+                        "guide",
+                        "cryptographic",
+                        "learn",
+                        "cloud",
+                        "compliance",
+                        "comprehensive",
+                        "infrastructure",
+                        "read",
+                        "qcecuring",
+                        "solutions",
+                        "signing",
+                        "request",
+                        "demo",
+                        "support",
+                        "automated",
+                        "2026",
+                        "product",
+                        "code",
+                        "native",
+                        "identity",
+                        "trust",
+                        "prevent",
+                        "enterprises",
+                        "secure",
+                        "grade",
+                        "integration",
+                        "migration",
+                        "level",
+                        "generation",
+                        "zero",
+                        "outages",
+                        "modern",
+                        "automate",
+                        "renewal",
+                        "monitoring",
+                        "centralized",
+                        "platform",
+                        "based",
+                        "technologies",
+                        "error",
+                        "server",
+                        "2025",
+                        "machine",
+                        "resources"
+                    ],
+                    "competitor_keywords": {
+                        "https://www.encryptionconsulting.com/": [
+                            "services",
+                            "secure",
+                            "solution",
+                            "encryption",
+                            "training",
+                            "service",
+                            "management",
+                            "center",
+                            "advisory",
+                            "certificate",
+                            "lifecycle",
+                            "demo",
+                            "compliance",
+                            "cloud",
+                            "data",
+                            "know",
+                            "cryptography",
+                            "contact",
+                            "world",
+                            "scalable",
+                            "cryptographic",
+                            "strengthen",
+                            "protection",
+                            "resources",
+                            "white",
+                            "expert",
+                            "certsecure",
+                            "manager",
+                            "codesign",
+                            "code",
+                            "signing",
+                            "complexities",
+                            "high",
+                            "assurance",
+                            "cbom",
+                            "discovery",
+                            "integrations",
+                            "across",
+                            "platforms",
+                            "solutions",
+                            "protect",
+                            "demand",
+                            "flexible",
+                            "person",
+                            "blogs",
+                            "papers",
+                            "reports",
+                            "trust",
+                            "request",
+                            "customer",
+                            "insights",
+                            "entire",
+                            "policy",
+                            "expertise",
+                            "enhance",
+                            "security",
+                            "discover",
+                            "provider",
+                            "applied",
+                            "consulting",
+                            "webinar",
+                            "register",
+                            "products",
+                            "without",
+                            "customizable",
+                            "inventory",
+                            "seamless",
+                            "strategy",
+                            "prepare",
+                            "quantum",
+                            "enterprise",
+                            "manage",
+                            "keys",
+                            "trainings",
+                            "master",
+                            "learning",
+                            "hands",
+                            "experts",
+                            "library",
+                            "education",
+                            "webinars",
+                            "briefs",
+                            "case",
+                            "studies",
+                            "company",
+                            "careers",
+                            "slack",
+                            "community",
+                            "newsroom",
+                            "partners",
+                            "driven",
+                            "organization",
+                            "trusted",
+                            "global",
+                            "environments",
+                            "efficient",
+                            "edge",
+                            "tailored",
+                            "depth",
+                            "latest",
+                            "podcast",
+                            "trends",
+                            "explore",
+                            "industry",
+                            "read",
+                            "agreement",
+                            "skip",
+                            "content",
+                            "upcoming",
+                            "login",
+                            "enter",
+                            "atleast",
+                            "characters",
+                            "search",
+                            "automated",
+                            "major",
+                            "action",
+                            "identities",
+                            "communications",
+                            "simplify",
+                            "centralize",
+                            "safeguard",
+                            "critical",
+                            "fundamentals",
+                            "learn",
+                            "securely",
+                            "hsms",
+                            "pace",
+                            "utilities",
+                            "root",
+                            "issuing",
+                            "scripts",
+                            "backup",
+                            "script",
+                            "google",
+                            "platform",
+                            "events",
+                            "leading",
+                            "delivering",
+                            "valuable",
+                            "assets",
+                            "retention",
+                            "satisfaction",
+                            "gartner",
+                            "peer",
+                            "offer",
+                            "comprehensive",
+                            "vendor",
+                            "neutral",
+                            "managing",
+                            "deterministic",
+                            "complete",
+                            "visibility",
+                            "governance",
+                            "environment",
+                            "ensuring",
+                            "safe",
+                            "software",
+                            "integrity",
+                            "digital",
+                            "architecture",
+                            "both",
+                            "premises",
+                            "automate",
+                            "areas",
+                            "systems",
+                            "guidance",
+                            "develop",
+                            "strong",
+                            "strategies",
+                            "mitigate",
+                            "risks",
+                            "optimize",
+                            "cutting",
+                            "ensure",
+                            "frameworks",
+                            "advice",
+                            "gain",
+                            "knowledge",
+                            "skills",
+                            "virtual",
+                            "courses",
+                            "requirements",
+                            "2025",
+                            "report",
+                            "over",
+                            "spanning",
+                            "multiple",
+                            "geographies",
+                            "sectors",
+                            "globe",
+                            "maturity",
+                            "model",
+                            "structured",
+                            "framework",
+                            "automation",
+                            "improve",
+                            "resilience",
+                            "achieve",
+                            "crypto"
+                        ]
+                    },
+                    "keyword_gap": {
+                        "https://www.encryptionconsulting.com/": [
+                            "services",
+                            "solution",
+                            "training",
+                            "advisory",
+                            "data",
+                            "know",
+                            "cryptography",
+                            "world",
+                            "scalable",
+                            "strengthen",
+                            "white",
+                            "expert",
+                            "certsecure",
+                            "codesign",
+                            "complexities",
+                            "high",
+                            "assurance",
+                            "cbom",
+                            "discovery",
+                            "platforms"
+                        ]
+                    }
+                },
+                "page_speed": {
+                    "issues": [
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "missing_charset"
+                        }
+                    ],
+                    "suggestions": {
+                        "https://www.qcecuring.com/": [
+                            {
+                                "type": "add_charset",
+                                "tag": "<meta charset=\"UTF-8\">",
+                                "action": "inject_into_head_first"
+                            }
+                        ]
+                    }
+                },
+                "heading_structure": {
+                    "issues": [],
+                    "suggestions": {}
+                },
+                "open_graph": {
+                    "issues": [],
+                    "suggestions": {}
+                },
+                "canonical_advanced": {
+                    "issues": [
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "cross_domain_canonical",
+                            "canonical": "https://qcecuring.com//"
+                        }
+                    ],
+                    "suggestions": {
+                        "https://www.qcecuring.com/": [
+                            {
+                                "type": "confirm_or_fix_canonical",
+                                "action": "verify cross-domain canonical points to: https://qcecuring.com//"
+                            }
+                        ]
+                    }
+                },
+                "broken_links": {
+                    "issues": [],
+                    "suggestions": {}
+                },
+                "content_quality": {
+                    "issues": [],
+                    "suggestions": {}
+                },
+                "mobile_seo": {
+                    "issues": [],
+                    "suggestions": {}
+                },
+                "page_experience": {
+                    "issues": [],
+                    "suggestions": {}
+                },
+                "structured_data_validator": {
+                    "issues": [
+                        {
+                            "url": "https://www.qcecuring.com/",
+                            "issue": "faq_schema_opportunity"
+                        }
+                    ],
+                    "suggestions": {
+                        "https://www.qcecuring.com/": [
+                            {
+                                "type": "inject_faq_schema",
+                                "schema": {
+                                    "@context": "https://schema.org",
+                                    "@type": "FAQPage",
+                                    "mainEntity": [
+                                        {
+                                            "@type": "Question",
+                                            "name": "Ready to Secure Your Enterprise?",
+                                            "acceptedAnswer": {
+                                                "@type": "Answer",
+                                                "text": "Experience how our cryptographic solutions simplify, centralize, and automate \n        identity management for your entire organization."
+                                            }
+                                        }
+                                    ]
+                                },
+                                "action": "inject_faq_json_ld_into_head"
+                            }
+                        ]
+                    }
+                },
+                "hreflang": {
+                    "issues": [],
+                    "suggestions": {}
+                }
+            },
+            "fixed_urls": [],
+            "strategy": [
+                "internal_links",
+                "crawl_budget",
+                "schema",
+                "image_seo",
+                "core_web_vitals",
+                "page_speed",
+                "canonical_advanced",
+                "structured_data_validator"
+            ],
+            "actions": [
+                {
+                    "type": "inject_schema",
+                    "url": "https://www.qcecuring.com/",
+                    "schema": {
+                        "@context": "https://schema.org",
+                        "@type": "WebPage",
+                        "name": "QCecuring - Enterprise Security Solutions",
+                        "description": "QCecuring - Enterprise Security Solutions for certificate management, Code Signing, SSH Key Management, and HSM Services",
+                        "url": "https://www.qcecuring.com/"
+                    }
+                },
+                {
+                    "type": "add_lazy_loading",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/brand/qcecuring-technologies.svg",
+                    "value": "loading='lazy'"
+                },
+                {
+                    "type": "add_lazy_loading",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/homepage/hersection.png",
+                    "value": "loading='lazy'"
+                },
+                {
+                    "type": "rename_image",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/homepage/SSL-CLM.png",
+                    "value": "ssl-clm.png"
+                },
+                {
+                    "type": "rename_image",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/homepage/code_sign.png",
+                    "value": "code-sign.png"
+                },
+                {
+                    "type": "rename_image",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/homepage/PKI.png",
+                    "value": "pki.png"
+                },
+                {
+                    "type": "add_lazy_loading",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/webinar/image1.png",
+                    "value": "loading='lazy'"
+                },
+                {
+                    "type": "add_lazy_loading",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/posts/dhkersa-title-banner.png",
+                    "value": "loading='lazy'"
+                },
+                {
+                    "type": "add_lazy_loading",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/posts/rpc-server-error.jpg",
+                    "value": "loading='lazy'"
+                },
+                {
+                    "type": "add_lazy_loading",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/posts/3des-retirement.jpg",
+                    "value": "loading='lazy'"
+                },
+                {
+                    "type": "add_lazy_loading",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/posts/nist-1800-16-banner.jpg",
+                    "value": "loading='lazy'"
+                },
+                {
+                    "type": "add_lazy_loading",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/posts/microsoft-certificate-mapping.jpg",
+                    "value": "loading='lazy'"
+                },
+                {
+                    "type": "add_lazy_loading",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/posts/tls-1.2-and-tls-1.3.png",
+                    "value": "loading='lazy'"
+                },
+                {
+                    "type": "add_lazy_loading",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/brand/qcecuring-technologies-white.svg",
+                    "value": "loading='lazy'"
+                },
+                {
+                    "type": "add_lazy_loading",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/assets/icons/svg/linkedin.svg",
+                    "value": "loading='lazy'"
+                },
+                {
+                    "type": "add_lazy_loading",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/assets/icons/svg/youtube.svg",
+                    "value": "loading='lazy'"
+                },
+                {
+                    "type": "add_lazy_loading",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/assets/icons/svg/github.svg",
+                    "value": "loading='lazy'"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/brand/qcecuring-technologies.svg"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/homepage/hersection.png"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/homepage/SSL-CLM.png"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/homepage/code_sign.png"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/homepage/ssh.png"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/homepage/hsm.png"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/homepage/PKI.png"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/homepage/cloud.png"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/webinar/image1.png"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/posts/dhkersa-title-banner.png"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/posts/rpc-server-error.jpg"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/posts/3des-retirement.jpg"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/posts/nist-1800-16-banner.jpg"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/posts/microsoft-certificate-mapping.jpg"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/posts/tls-1.2-and-tls-1.3.png"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/images/brand/qcecuring-technologies-white.svg"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/assets/icons/svg/linkedin.svg"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/assets/icons/svg/youtube.svg"
+                },
+                {
+                    "type": "add_image_dimensions",
+                    "url": "https://www.qcecuring.com/",
+                    "image": "/assets/icons/svg/github.svg"
+                },
+                {
+                    "type": "defer_script",
+                    "url": "https://www.qcecuring.com/",
+                    "script": "/_astro/ClientRouter.astro_astro_type_script_index_0_lang.DZnDNxNb.js"
+                },
+                {
+                    "type": "defer_script",
+                    "url": "https://www.qcecuring.com/",
+                    "script": "/bp-inject.js"
+                },
+                {
+                    "type": "inject_into_head",
+                    "url": "https://www.qcecuring.com/",
+                    "tag": "<meta charset=\"UTF-8\">"
+                },
+                {
+                    "type": "inject_faq_schema",
+                    "url": "https://www.qcecuring.com/",
+                    "schema": {
+                        "@context": "https://schema.org",
+                        "@type": "FAQPage",
+                        "mainEntity": [
+                            {
+                                "@type": "Question",
+                                "name": "Ready to Secure Your Enterprise?",
+                                "acceptedAnswer": {
+                                    "@type": "Answer",
+                                    "text": "Experience how our cryptographic solutions simplify, centralize, and automate \n        identity management for your entire organization."
+                                }
+                            }
+                        ]
+                    }
+                }
+            ],
+            "seo_score": 76
+        },
+        "errors": [
+            {
+                "keyword": "services",
+                "error": "[WinError 10061] No connection could be made because the target machine actively refused it"
+            },
+            {
+                "keyword": "solution",
+                "error": "[WinError 10061] No connection could be made because the target machine actively refused it"
+            },
+            {
+                "keyword": "training",
+                "error": "[WinError 10061] No connection could be made because the target machine actively refused it"
+            },
+            {
+                "keyword": "advisory",
+                "error": "[WinError 10061] No connection could be made because the target machine actively refused it"
+            },
+            {
+                "keyword": "data",
+                "error": "[WinError 10061] No connection could be made because the target machine actively refused it"
+            }
+        ],
+        "state": "pending_approval"
+    }
+}

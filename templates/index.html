@@ -751,10 +751,28 @@
         {% endif %}
 
         {% if plugin_report.state == 'completed' %}
-        <div class="review-section" style="border-color: var(--primary-color);">
-            <h3 style="color: var(--primary-color);">✓ Deployment Successful</h3>
-            <p>Applied {{plugin_report.fixes_applied|length}} fixes and generated {{plugin_report.pages_generated|length}} new pages.</p>
-        </div>
+            {% set total_failed = plugin_report.deploy_results | selectattr('success', 'equalto', false) | list | length %}
+            {% set total_success = plugin_report.deploy_results | selectattr('success', 'equalto', true) | list | length %}
+            
+            <div class="review-section" style="border-color: {{ '#ef4444' if total_failed > 0 else 'var(--primary-color)' }};">
+                <h3 style="color: {{ '#ef4444' if total_failed > 0 else 'var(--primary-color)' }};">
+                    {{ '✗ Deployment Mixed Results' if (total_failed > 0 and total_success > 0) else ('✗ Deployment Failed' if total_failed > 0 else '✓ Deployment Successful') }}
+                </h3>
+                <p>Applied {{plugin_report.fixes_applied|length}} fixes and generated {{plugin_report.pages_generated|length}} new pages.</p>
+                
+                {% if total_failed > 0 %}
+                <div style="margin-top: 15px; padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);">
+                    <strong style="color: #ef4444; display: block; margin-bottom: 5px;">Deployment Failures:</strong>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; color: #ef4444;">
+                        {% for res in plugin_report.deploy_results %}
+                            {% if not res.success %}
+                                <li><strong>{{ res.file_path }}:</strong> {{ res.message }}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
         {% endif %}
 
         {% if plugin_report.errors %}

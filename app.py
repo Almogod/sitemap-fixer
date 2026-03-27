@@ -305,6 +305,10 @@ def approve_plugin_fixes(
 ):
     action_ids = [a.strip() for a in approved_actions.split(",") if a.strip()]
     page_keywords = [p.strip() for p in approved_pages.split(",") if p.strip()]
+
+    # Sanitize github_repo
+    if github_repo:
+        github_repo = github_repo.strip().replace("https://github.com/", "").strip("/")
     
     deploy_config = {
         "platform": method,
