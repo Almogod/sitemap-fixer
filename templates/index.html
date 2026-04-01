@@ -988,7 +988,7 @@
             </div>
         </div>
 
-        {% if keyword_gap %}
+        {% if plugin_report.content_generation_available and plugin_report.keyword_recommendations %}
         <div class="review-section" style="margin-top: 20px; border-top: 1px solid var(--card-border); padding-top: 20px;">
             <h3 style="margin-bottom: 15px; font-weight: 600;">Content Engine: Keyword Gap Recommendations</h3>
             <p style="color: var(--text-muted); margin-bottom: 15px;">Target these keywords that your competitors rank for but you are missing.</p>
@@ -1002,18 +1002,16 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for comp, keywords in keyword_gap.items() %}
-                        {% for kw in keywords %}
-                        <tr>
-                            <td><strong>{{kw}}</strong></td>
-                            <td>{{comp}}</td>
-                            <td>
-                                <button onclick="generateContentForKeyword('{{kw}}', '{{comp}}')" class="btn-sm" style="background: var(--primary-color); border: none; padding: 5px 12px; border-radius: 4px; color: white; cursor: pointer;">
-                                    Generate SEO Page
-                                </button>
-                            </td>
-                        </tr>
-                        {% endfor %}
+                    {% for rec in plugin_report.keyword_recommendations %}
+                    <tr id="row-{{rec.keyword|replace(' ', '-')}}">
+                        <td><strong>{{rec.keyword}}</strong></td>
+                        <td>{{rec.source}}</td>
+                        <td>
+                            <button onclick="generateContentForKeyword('{{rec.keyword}}', '{{rec.source}}')" class="btn-sm gen-btn" style="background: var(--primary-color); border: none; padding: 5px 12px; border-radius: 4px; color: white; cursor: pointer;">
+                                Generate SEO Page
+                            </button>
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -1039,8 +1037,22 @@
                     <tr>
                         <td><input type="checkbox" class="action-check" data-id="{{loop.index0}}" checked></td>
                         <td><span class="badge">{{action.type}}</span></td>
-                        <td>{{action.url|truncate(30)}}</td>
-                        <td>{{action.description or action.tag or action.fix_type or 'Apply SEO fix'}}</td>
+                        <td>{{action.url|truncate(40)}}</td>
+                        <td>
+                            {% if action.description %}
+                                {{action.description}}
+                            {% elif action.type == 'meta' %}
+                                Optimize {{action.tag}} tag (Currently {{action.current_length|default('missing or poor')}})
+                            {% elif action.type == 'image_seo' %}
+                                Add descriptive alt text to image: {{action.src|default('unknown')|truncate(30)}}
+                            {% elif action.type == 'heading_structure' %}
+                                Fix heading hierarchy (e.g. {{action.fix_type|default('ensure H1 exists')}})
+                            {% elif action.type == 'broken_links' %}
+                                Replace broken link pointing to: {{action.href|default('unknown target')}}
+                            {% else %}
+                                {{action.fix_type or 'Apply SEO fix for ' + action.type}}
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -1054,6 +1066,7 @@
                         <th><input type="checkbox" checked onchange="toggleAllPages(this)"></th>
                         <th>Keyword</th>
                         <th>Title</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="pages-body">
@@ -1062,6 +1075,15 @@
                         <td><input type="checkbox" class="page-check" data-keyword="{{page.keyword}}" checked></td>
                         <td>{{page.keyword}}</td>
                         <td>{{page.title}}</td>
+                        <td>
+                            <button 
+                                onclick='openContentEditor("{{page.keyword}}", this)' 
+                                data-schema='{{ page.schema_data|tojson|safe if page.schema_data else "{}" }}'
+                                class="btn-sm" 
+                                style="background: var(--secondary-color); border: none; padding: 5px 12px; border-radius: 4px; color: white; cursor: pointer;">
+                                Edit Content
+                            </button>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -1349,6 +1371,21 @@
     {% endif %}
     {% endif %}
     {% endif %}
+
+    <!-- CONTENT EDITOR MODAL -->
+    <div id="content-editor-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center;">
+        <div class="card" style="width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; position: relative;">
+            <button onclick="closeContentEditor()" style="position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+            <h2 style="margin-top: 0;">Content Editor: <span id="editor-keyword" style="color: var(--primary-color);"></span></h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">Edit the JSON structure of the generated page. The HTML will be re-rendered automatically on save.</p>
+            <input type="hidden" id="editor-keyword-input">
+            <textarea id="editor-textarea" style="width: 100%; height: 50vh; font-family: monospace; font-size: 0.85rem; padding: 15px; background: rgba(0,0,0,0.05); border: 1px solid var(--card-border); border-radius: 8px; color: var(--text-color);"></textarea>
+            <div style="margin-top: 20px; text-align: right;">
+                <button onclick="closeContentEditor()" style="background: none; border: 1px solid var(--card-border); padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-right: 10px; color: var(--text-color);">Cancel</button>
+                <button id="editor-save-btn" onclick="saveContent()" style="background: var(--primary-color); border: none; padding: 10px 20px; border-radius: 6px; color: white; cursor: pointer; font-weight: 600;">Save & Render</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -1609,10 +1646,10 @@
             
             if (data.status === 'generation_started') {
                 alert(`Content generation started for "${kw}". Check progress below.`);
-                btn.innerText = "Success";
+                btn.innerText = "Started";
                 setTimeout(() => {
                     location.reload(); // Quick refresh to show the new pages in the "AI Pages" table
-                }, 1500);
+                }, 2000);
             } else {
                 alert("Failed: " + (data.error || "Unknown error"));
                 btn.innerText = originalText;
@@ -1624,6 +1661,66 @@
             btn.disabled = false;
         }
     }
+    
+    // --- Content Editor ---
+    function openContentEditor(keyword, btn) {
+        const schemaData = btn.getAttribute('data-schema');
+        document.getElementById('editor-keyword').innerText = keyword;
+        document.getElementById('editor-keyword-input').value = keyword;
+        document.getElementById('editor-textarea').value = JSON.stringify(JSON.parse(schemaData), null, 2);
+        document.getElementById('content-editor-modal').classList.remove('hidden');
+    }
+    
+    function closeContentEditor() {
+        document.getElementById('content-editor-modal').classList.add('hidden');
+    }
+    
+    async function saveContent() {
+        const keyword = document.getElementById('editor-keyword-input').value;
+        const schemaDataValue = document.getElementById('editor-textarea').value;
+        const saveBtn = document.getElementById('editor-save-btn');
+        const originalText = saveBtn.innerText;
+        
+        try {
+            JSON.parse(schemaDataValue); // Validates JSON format
+        } catch(e) {
+            alert("Invalid JSON schema. Please correct errors before saving.");
+            return;
+        }
+        
+        saveBtn.disabled = true;
+        saveBtn.innerText = "Saving...";
+        
+        try {
+            const formData = new FormData();
+            formData.append('task_id', '{{task_id}}');
+            formData.append('keyword', keyword);
+            formData.append('schema_data', schemaDataValue);
+            
+            const res = await fetch('/plugin/update_content', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            
+            if (data.status === 'success') {
+                saveBtn.innerText = "Saved!";
+                setTimeout(() => {
+                    closeContentEditor();
+                    location.reload();
+                }, 1000);
+            } else {
+                alert("Failed to save: " + data.error);
+                saveBtn.innerText = originalText;
+                saveBtn.disabled = false;
+            }
+        } catch(e) {
+            alert("Error saving: " + e.message);
+            saveBtn.innerText = originalText;
+            saveBtn.disabled = false;
+        }
+    }
+
     function downloadPDF() {
         window.open('/plugin/download_report?task_id={{task_id}}', '_blank');
     }

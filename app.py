@@ -468,12 +468,16 @@ def generate_keyword_content(
             if "pages_generated" not in results:
                 results["pages_generated"] = []
             
+            # Check if this keyword is already generated, overwrite if so
+            results["pages_generated"] = [p for p in results["pages_generated"] if p["keyword"] != keyword]
+            
             results["pages_generated"].append({
                 "keyword": keyword,
-                "slug": new_page["slug"],
-                "title": new_page["meta_title"],
-                "word_count": new_page["word_count"],
-                "html": new_page["html"],
+                "slug": new_page.get("slug", ""),
+                "title": new_page.get("meta_title", ""),
+                "word_count": new_page.get("word_count", 0),
+                "html": new_page.get("html", ""),
+                "schema_data": new_page.get("schema_data", {}),
                 "approved": True
             })
             task_store.save_results(task_id, results)
@@ -483,6 +487,53 @@ def generate_keyword_content(
 
     background_tasks.add_task(run_gen)
     return JSONResponse(content={"status": "generation_started", "keyword": keyword})
+
+@app.post("/plugin/update_content")
+@limiter.limit("20/15minutes")
+def update_keyword_content(
+    request: Request,
+    task_id: str = Form(...),
+    keyword: str = Form(...),
+    schema_data: str = Form(...)
+):
+    """
+    Endpoint for updating the generated JSON schema and re-rendering HTML.
+    """
+    try:
+        results = task_store.get_results(task_id)
+        if not results or "pages_generated" not in results:
+            return JSONResponse(status_code=404, content={"error": "No generated pages found."})
+            
+        parsed_schema = json.loads(schema_data)
+        
+        # Re-render HTML from updated schema
+        from src.content.page_generator import render_content_to_html
+        new_html = render_content_to_html(parsed_schema)
+        
+        # Update word count
+        word_count = parsed_schema.get("content_metadata", {}).get("word_count", 0)
+        
+        # Update the page in the task store
+        updated = False
+        for page in results["pages_generated"]:
+            if page["keyword"] == keyword:
+                page["schema_data"] = parsed_schema
+                page["html"] = new_html
+                page["word_count"] = word_count
+                page["title"] = parsed_schema.get("meta", {}).get("title", "")
+                page["slug"] = parsed_schema.get("meta", {}).get("slug", "")
+                updated = True
+                break
+                
+        if updated:
+            task_store.save_results(task_id, results)
+            return JSONResponse(content={"status": "success", "keyword": keyword, "word_count": word_count})
+        else:
+            return JSONResponse(status_code=404, content={"error": f"Keyword {keyword} not found in generated pages."})
+            
+    except Exception as e:
+        logger.error(f"Error updating content: {str(e)}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 @app.get("/download")
 def download_file(file: str):

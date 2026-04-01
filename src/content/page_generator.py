@@ -23,75 +23,87 @@ import random
 import hashlib
 from datetime import datetime
 from src.content.content_brief import ContentBrief
+from src.content.content_schema import StructuredContent, MetaInfo, ContentMetadata, Hero, Section, Media, Callout, FAQItem, SchemaMarkup
 from src.utils.logger import logger
-
 
 def generate_page(brief: ContentBrief, llm_config: dict, existing_pages: list = None) -> dict:
     """
-    Generate a complete SEO-optimized HTML page from a ContentBrief.
+    Generate a complete SEO-optimized JSON structure from a ContentBrief.
 
     Strategy:
       1. If a valid LLM API key is provided, use the LLM with improved prompts.
       2. If the LLM call fails, fall back to built-in generation.
       3. If no API key is provided at all, use built-in generation directly.
 
-    Args:
-        brief: ContentBrief with keyword, headings, LSI terms, etc.
-        llm_config: dict with keys: provider, api_key, model
-        existing_pages: list of {url, title} for internal links
-
     Returns:
-        dict with: html, slug, meta_title, meta_description, schema, word_count
+        dict with: keyword, slug, meta_title, word_count, generation_method, json_schema
     """
     existing_pages = existing_pages or []
-    content = None
+    json_schema_dict = None
     generation_method = "builtin"
 
-    # Check if we have a usable API key
     has_api = bool(llm_config.get("api_key"))
     provider = llm_config.get("provider", "").lower()
 
-    # Ollama doesn't need an API key, just a host
     if provider == "ollama":
         has_api = True
 
     if has_api:
         try:
             prompt = _build_prompt(brief, existing_pages)
+            raw_content = None
             if provider == "openai":
-                content = _call_openai(prompt, llm_config)
+                raw_content = _call_openai(prompt, llm_config)
             elif provider == "gemini":
-                content = _call_gemini(prompt, llm_config)
+                raw_content = _call_gemini(prompt, llm_config)
             elif provider == "ollama":
-                content = _call_ollama(prompt, llm_config)
+                raw_content = _call_ollama(prompt, llm_config)
             else:
                 logger.warning(f"Unknown LLM provider '{provider}', falling back to built-in generator")
 
-            if content:
-                generation_method = provider
-                logger.info(f"Content generated via {provider} ({len(content.split())} words)")
+            if raw_content:
+                json_schema_dict = _extract_json_from_llm(raw_content)
+                if json_schema_dict:
+                    generation_method = provider
+                    logger.info(f"Structured Content generated via {provider}")
+                else:
+                    logger.warning(f"Failed to parse JSON from {provider}, falling back to built-in")
         except Exception as e:
             logger.warning(f"LLM call failed ({provider}): {e} — falling back to built-in generator")
-            content = None
+            json_schema_dict = None
 
-    # Fallback (or primary if no API)
-    if not content:
-        content = _generate_builtin(brief, existing_pages)
+    if not json_schema_dict:
+        json_schema_dict = _generate_builtin(brief, existing_pages)
         generation_method = "builtin"
-        logger.info(f"Content generated via built-in engine ({len(content.split())} words)")
+        logger.info(f"Structured Content generated via built-in engine")
 
-    html = _wrap_in_page(content, brief)
-    schema = _build_schemas(brief)
+    word_count = json_schema_dict.get("content_metadata", {}).get("word_count", 0)
 
     return {
         "slug": brief.url_slug,
         "meta_title": brief.page_title,
         "meta_description": brief.meta_description,
-        "html": html,
-        "schema": schema,
-        "word_count": len(content.split()),
+        "schema_data": json_schema_dict,
+        "word_count": word_count,
         "generation_method": generation_method,
     }
+
+def _extract_json_from_llm(text: str) -> dict:
+    try:
+        # Check for markdown json block
+        if "```json" in text:
+            match = re.search(r"```json(.*?)```", text, re.DOTALL)
+            if match:
+                return json.loads(match.group(1).strip())
+        elif "```" in text:
+            match = re.search(r"```(.*?)```", text, re.DOTALL)
+            if match:
+                return json.loads(match.group(1).strip())
+        # Try parsing raw text
+        return json.loads(text.strip())
+    except Exception as e:
+        logger.error(f"Failed to extract JSON schema: {e}")
+        return None
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -173,31 +185,53 @@ _FAQ_ANSWER_PATTERNS = [
 ]
 
 
-def _generate_builtin(brief: ContentBrief, existing_pages: list) -> str:
+def _generate_builtin(brief: ContentBrief, existing_pages: list) -> dict:
     """
     Generate a complete article body using template-driven composition.
-    Produces human-quality prose with varied sentence lengths, natural
-    transitions, rhetorical questions, and SEO-conscious keyword placement.
+    Produces structured JSON content matching the ContentSchema.
     """
     rng = random.Random(hashlib.md5(brief.target_keyword.encode()).hexdigest())
     kw = brief.target_keyword
-    kw_title = kw.title()
+    
+    # meta
+    meta = {
+        "title": brief.page_title,
+        "description": brief.meta_description,
+        "slug": brief.url_slug,
+    }
+    
+    # content_metadata
+    content_metadata = {
+        "keyword": kw,
+        "niche": brief.niche,
+        "audience": brief.audience_type,
+        "tone": brief.tone,
+        "search_intent": brief.search_intent,
+        "pain_points": brief.pain_points,
+        "monetary_aspects": brief.monetary_aspects,
+        "word_count": 0, # will calculate at end
+    }
+
+    # hero
+    hero = {
+        "headline": brief.page_title,
+        "subheadline": brief.meta_description,
+        "cta_text": brief.cta_suggestions[0] if brief.cta_suggestions else None
+    }
+
     sections = []
 
-    # ── 1. Title ──────────────────────────────────────────────────────
-    sections.append(f"<h1>{brief.page_title}</h1>")
+    # 1. Introduction
+    sections.append(_build_intro_section(brief, rng))
 
-    # ── 2. Introduction (2-3 paragraphs) ──────────────────────────────
-    sections.append(_build_intro(brief, rng))
-
-    # ── 3. Body sections from headings ────────────────────────────────
+    # 2. Body sections
     headings = brief.headings or _generate_fallback_headings(kw, brief.search_intent)
     lsi_pool = list(brief.lsi_terms)
     entity_pool = list(brief.entity_mentions)
     internal_links = list(existing_pages)
 
     for i, heading in enumerate(headings):
-        section_html = _build_section(
+        sec = _build_body_section(
             heading=heading,
             keyword=kw,
             lsi_pool=lsi_pool,
@@ -208,97 +242,120 @@ def _generate_builtin(brief: ContentBrief, existing_pages: list) -> str:
             total_sections=len(headings),
             rng=rng,
         )
-        sections.append(section_html)
+        sections.append(sec)
 
-    # ── 4. FAQ section ────────────────────────────────────────────────
+    # 3. Conclusion
+    sections.append(_build_conclusion_section(brief, rng))
+
+    # 4. FAQ
+    faq_items = []
     if brief.faq_questions:
-        sections.append(_build_faq_section(brief, rng))
+        faq_items = _build_faq_items(brief, rng)
 
-    # ── 5. Conclusion ─────────────────────────────────────────────────
-    sections.append(_build_conclusion(brief, rng))
+    schema_markup = {
+        "article": True,
+        "faq": len(faq_items) > 0,
+        "breadcrumb": True
+    }
 
-    return "\n\n".join(sections)
+    # count words
+    total_words = len(hero["headline"].split()) + len(hero["subheadline"].split())
+    for s in sections:
+        total_words += len(s["heading"].split())
+        for p in s["body_paragraphs"]: total_words += len(p.split())
+        if s.get("callout"):
+            total_words += len(s["callout"]["text"].split())
+    for f in faq_items:
+        total_words += len(f["question"].split()) + len(f["answer"].split())
+        
+    content_metadata["word_count"] = total_words
+
+    structured_content = {
+        "meta": meta,
+        "content_metadata": content_metadata,
+        "hero": hero,
+        "sections": sections,
+        "faq": faq_items,
+        "schema_markup": schema_markup
+    }
+
+    return structured_content
 
 
-def _build_intro(brief: ContentBrief, rng: random.Random) -> str:
+def _build_intro_section(brief: ContentBrief, rng: random.Random) -> dict:
     """Build an engaging 2-3 paragraph introduction."""
     kw = brief.target_keyword
-    kw_title = kw.title()
     lsi_sample = brief.lsi_terms[:5]
     power = brief.power_words[:3] if brief.power_words else ["essential", "practical", "proven"]
 
-    # Pick a hook style
     hook_style = rng.choice(list(_INTRO_HOOKS.keys()))
     hook = rng.choice(_INTRO_HOOKS[hook_style]).format(keyword=kw)
 
-    # Build context paragraph
     lsi_mention = ""
     if lsi_sample:
         lsi_mention = f" — from {lsi_sample[0]} to {lsi_sample[1]}" if len(lsi_sample) >= 2 else f" including {lsi_sample[0]}"
 
     context_templates = [
-        f"<p>{hook} In this {power[0]} guide, we'll walk you through everything "
-        f"you need to know about <strong>{kw}</strong>{lsi_mention}. Whether you're "
+        f"{hook} In this {power[0]} guide, we'll walk you through everything "
+        f"you need to know about {kw}{lsi_mention}. Whether you're "
         f"just getting started or looking to sharpen your approach, you'll find "
-        f"actionable insights that you can put to work right away.</p>",
-
-        f"<p>{hook} The truth is, <strong>{kw}</strong> is one of those areas "
+        f"actionable insights that you can put to work right away.",
+        
+        f"{hook} The truth is, {kw} is one of those areas "
         f"where the right knowledge can save you hours of trial and error. We've "
         f"put together this {power[0]} resource to give you a clear roadmap"
-        f"{lsi_mention}. No fluff — just the stuff that actually works.</p>",
-
-        f"<p>{hook} Understanding <strong>{kw}</strong> isn't just useful — "
+        f"{lsi_mention}. No fluff — just the stuff that actually works.",
+        
+        f"{hook} Understanding {kw} isn't just useful — "
         f"it's {power[0]}. In this guide, we'll cover the key concepts"
         f"{lsi_mention}, with {power[1] if len(power) > 1 else 'practical'} "
-        f"examples and real-world applications. Let's dive in.</p>",
+        f"examples and real-world applications. Let's dive in.",
     ]
     intro_p1 = rng.choice(context_templates)
 
-    # Second paragraph — set expectations
     cta = brief.cta_suggestions[0] if brief.cta_suggestions else "Let's get into it."
     heading_preview = ""
     if brief.headings and len(brief.headings) >= 3:
         heading_preview = (
-            f" We'll cover topics like <em>{brief.headings[0].lower()}</em>, "
-            f"<em>{brief.headings[1].lower()}</em>, and "
-            f"<em>{brief.headings[2].lower()}</em> — among others."
+            f" We'll cover topics like {brief.headings[0].lower()}, "
+            f"{brief.headings[1].lower()}, and "
+            f"{brief.headings[2].lower()} — among others."
         )
 
     intro_p2 = (
-        f"<p>By the end of this guide, you'll have a solid understanding of "
-        f"<strong>{kw}</strong> and how to apply it effectively.{heading_preview} "
-        f"{cta}</p>"
+        f"By the end of this guide, you'll have a solid understanding of "
+        f"{kw} and how to apply it effectively.{heading_preview} "
+        f"{cta}"
     )
 
-    return intro_p1 + "\n\n" + intro_p2
+    return {
+        "id": "intro",
+        "type": "intro",
+        "heading": "Introduction",
+        "body_paragraphs": [intro_p1, intro_p2]
+    }
 
 
-def _build_section(heading, keyword, lsi_pool, entity_pool,
-                   internal_links, brief, section_index, total_sections, rng) -> str:
-    """Build a single content section with 3-5 paragraphs."""
+def _build_body_section(heading, keyword, lsi_pool, entity_pool,
+                        internal_links, brief, section_index, total_sections, rng) -> dict:
+    """Build a single content section dict with 3-5 paragraphs."""
     parts = []
 
-    # Transition (skip for first section)
     if section_index > 0:
         transition = rng.choice(_TRANSITIONS)
-        parts.append(f"<p>{transition}</p>")
+        parts.append(transition)
 
-    parts.append(f"<h2>{heading}</h2>")
-
-    # Pick LSI terms to weave into this section
     section_lsi = []
     if lsi_pool:
         count = min(3, len(lsi_pool))
         section_lsi = [lsi_pool.pop(0) for _ in range(count) if lsi_pool]
 
-    # Pick entities
     section_entities = []
     if entity_pool:
         count = min(2, len(entity_pool))
         section_entities = [entity_pool.pop(0) for _ in range(count) if entity_pool]
 
-    # Generate 3-5 paragraphs
-    num_paragraphs = rng.randint(3, 5)
+    num_paragraphs = rng.randint(2, 4)
     for p_idx in range(num_paragraphs):
         para = _build_paragraph(
             heading=heading,
@@ -310,28 +367,27 @@ def _build_section(heading, keyword, lsi_pool, entity_pool,
             brief=brief,
             rng=rng,
         )
-        parts.append(para)
+        parts.append(para.replace('<p>', '').replace('</p>', '').replace('<strong>', '').replace('</strong>', ''))
 
-    # Maybe add an internal link
+    sec_dict = {
+        "id": f"section-{section_index}",
+        "type": "body",
+        "heading": heading,
+        "body_paragraphs": parts,
+    }
+
     if internal_links and rng.random() > 0.5:
         link = internal_links.pop(0)
-        url = link.get("url", "#")
-        title = link.get("title", keyword)
-        parts.append(
-            f'<p>For more on this topic, check out our article on '
-            f'<a href="{url}">{title}</a>.</p>'
-        )
+        sec_dict["internal_links"] = [{"title": link.get("title", keyword), "url": link.get("url", "#")}]
 
-    # Maybe add a callout/tip box (every 2-3 sections)
     if section_index % 2 == 1 and brief.power_words:
         pw = rng.choice(brief.power_words) if brief.power_words else "key"
-        parts.append(
-            f'<blockquote><strong>💡 Pro Tip:</strong> The most {pw} approach to '
-            f'{heading.lower()} is to start small, measure your results, and iterate. '
-            f"Don't try to do everything at once.</blockquote>"
-        )
-
-    return "\n".join(parts)
+        sec_dict["callout"] = {
+            "type": "tip",
+            "text": f"The most {pw} approach to {heading.lower()} is to start small, measure your results, and iterate. Don't try to do everything at once."
+        }
+        
+    return sec_dict
 
 
 def _build_paragraph(heading, keyword, lsi_terms, entities, para_index,
@@ -341,9 +397,7 @@ def _build_paragraph(heading, keyword, lsi_terms, entities, para_index,
     heading_lower = heading.lower()
     sentences = []
 
-    # Determine paragraph role
     if para_index == 0:
-        # Opening paragraph — introduce the subtopic
         openers = [
             f"When it comes to {heading_lower}, there are a few things worth understanding from the start.",
             f"Let's talk about {heading_lower}. It's an area that often doesn't get the attention it deserves.",
@@ -353,11 +407,9 @@ def _build_paragraph(heading, keyword, lsi_terms, entities, para_index,
         ]
         sentences.append(rng.choice(openers))
     elif para_index == total_paras - 1:
-        # Closing paragraph — wrap up the section
         connector = rng.choice(_CONNECTORS)
         sentences.append(f"{connector} getting {heading_lower} right is about consistency and attention to detail.")
     else:
-        # Middle paragraphs — add detail, examples, nuance
         mid_openers = [
             "There's an important nuance here.",
             "Let me expand on that.",
@@ -368,7 +420,6 @@ def _build_paragraph(heading, keyword, lsi_terms, entities, para_index,
         ]
         sentences.append(rng.choice(mid_openers))
 
-    # Add 2-4 more sentences with varied lengths
     detail_count = rng.randint(2, 4)
     for i in range(detail_count):
         sentence = _generate_detail_sentence(
@@ -378,7 +429,6 @@ def _build_paragraph(heading, keyword, lsi_terms, entities, para_index,
         )
         sentences.append(sentence)
 
-    # Occasionally add a rhetorical question (human touch)
     if rng.random() > 0.65:
         questions = [
             f"So what does this mean for your approach to {kw}?",
@@ -389,46 +439,27 @@ def _build_paragraph(heading, keyword, lsi_terms, entities, para_index,
         ]
         sentences.insert(rng.randint(1, len(sentences)), rng.choice(questions))
 
-    # Occasionally add a short, punchy sentence (rhythm variation)
     if rng.random() > 0.6:
         punchy = [
-            "It's that simple.",
-            "And it works.",
-            "Don't skip this.",
-            "Trust the process.",
-            "Results follow effort.",
-            "Details matter.",
+            "It's that simple.", "And it works.", "Don't skip this.",
+            "Trust the process.", "Results follow effort.", "Details matter.",
             "That's a game changer.",
         ]
         sentences.insert(rng.randint(1, len(sentences)), rng.choice(punchy))
 
-    # Sometimes bold a key phrase
     text = " ".join(sentences)
-    if kw.lower() in text.lower() and rng.random() > 0.5:
-        # Bold only the first occurrence in this paragraph
-        pattern = re.compile(re.escape(kw), re.IGNORECASE)
-        text = pattern.sub(f"<strong>{kw}</strong>", text, count=1)
-
-    return f"<p>{text}</p>"
+    return text
 
 
 def _generate_detail_sentence(keyword, heading, lsi_terms, entities, brief, rng) -> str:
-    """Generate a single detail sentence, naturally weaving in LSI/entities."""
     templates = []
-
-    # LSI-infused sentences
     if lsi_terms:
         lsi = rng.choice(lsi_terms)
         templates.extend([
             f"One aspect that connects directly to {heading} is {lsi} — and understanding that relationship gives you an edge.",
             f"When you consider {lsi} alongside {keyword}, the picture becomes much clearer.",
             f"Experts in this space often emphasize the role of {lsi} when discussing {heading}.",
-            f"The interplay between {lsi} and {keyword} is something that separates beginners from professionals.",
-            f"If you look at {lsi} closely, you'll notice patterns that directly relate to {heading}.",
-            f"Many overlook the connection between {lsi} and {keyword}, but it's worth paying attention to.",
         ])
-
-    # Entity-infused sentences
     if entities:
         entity = rng.choice(entities)
         templates.extend([
@@ -436,68 +467,42 @@ def _generate_detail_sentence(keyword, heading, lsi_terms, entities, brief, rng)
             f"Industry leaders, including {entity}, have adopted approaches that prioritize {heading}.",
             f"Looking at how {entity} handles this gives practical insight into effective {keyword} strategies.",
         ])
-
-    # Generic detail sentences
     templates.extend([
         f"The key to making {heading} work lies in understanding the underlying principles rather than just following rules.",
         f"In practice, the most successful approach to {heading} involves a combination of strategy, execution, and continuous refinement.",
         f"What many people get wrong about {heading} is treating it as a one-time task rather than an ongoing process.",
-        f"The best results come when you approach {heading} with both a strategic mindset and attention to tactical details.",
-        f"Research consistently supports the idea that a thoughtful approach to {heading} yields better long-term outcomes.",
-        f"One practical way to improve your {heading} is to audit what you're currently doing and identify the gaps.",
         f"From a {keyword} perspective, {heading} isn't optional — it's foundational.",
         f"Small improvements in {heading} can compound over time, leading to significant gains in your overall {keyword} results.",
-        f"The difference between average and excellent often comes down to how thoroughly you address {heading}.",
-        f"Don't underestimate the impact of getting {heading} right — it affects everything downstream.",
     ])
-
     return rng.choice(templates)
 
 
-def _build_faq_section(brief: ContentBrief, rng: random.Random) -> str:
-    """Build an FAQ section with direct, helpful answers."""
-    parts = ["<h2>Frequently Asked Questions</h2>"]
+def _build_faq_items(brief: ContentBrief, rng: random.Random) -> list:
+    """Build FAQ item dicts."""
     kw = brief.target_keyword
+    faq_items = []
 
-    # Answer closings
     closings = [
         "requires both understanding and practice",
         "is ultimately about getting the fundamentals right",
         "depends on your specific situation and goals",
         "is an evolving field, so staying current is important",
-        "benefits from a strategic, long-term perspective",
-        "works best when combined with consistent effort",
     ]
-
-    # Brief answer prefixes for the short-answer pattern
     brief_answers = [
         "Yes, absolutely",
         "It depends on your situation",
         "Generally speaking, yes",
         "The short answer is yes",
-        "In most cases, yes",
     ]
 
     for q in brief.faq_questions:
         q_clean = q.strip().rstrip("?") + "?"
-
-        # Generate a substantive answer body
         answer_bodies = [
             f"This is a common question, and the answer involves understanding how {kw} works in practice. "
-            f"The core idea is that {q_clean.lower().replace('?', '')} connects directly to the broader topic of {kw}. "
-            f"When you break it down, there are a few factors at play — context, execution, and consistency.",
-
+            f"The core idea is that {q_clean.lower().replace('?', '')} connects directly to the broader topic of {kw}.",
+            
             f"To answer this properly, we need to look at {kw} from a practical standpoint. "
-            f"The reality is that {q_clean.lower().replace('?', '')} isn't a simple yes-or-no situation. "
-            f"It depends on your goals, your current setup, and how much effort you're willing to invest.",
-
-            f"This comes up a lot, and for good reason. {kw.title()} touches on so many areas that "
-            f"it's natural to have questions. The practical answer is that you should focus on "
-            f"understanding the principles first, then move to implementation.",
-
-            f"Let's address this head-on. {q_clean.lower().replace('?', '').capitalize()} "
-            f"is closely tied to how well you understand {kw}. The good news is that once "
-            f"you grasp the fundamentals, the rest falls into place more naturally.",
+            f"The reality is that {q_clean.lower().replace('?', '')} isn't a simple yes-or-no situation.",
         ]
 
         pattern = rng.choice(_FAQ_ANSWER_PATTERNS)
@@ -508,13 +513,12 @@ def _build_faq_section(brief: ContentBrief, rng: random.Random) -> str:
             brief_answer=rng.choice(brief_answers),
         )
 
-        parts.append(f"<h3>{q_clean}</h3>")
-        parts.append(f"<p>{answer}</p>")
+        faq_items.append({"question": q_clean, "answer": answer})
 
-    return "\n".join(parts)
+    return faq_items
 
 
-def _build_conclusion(brief: ContentBrief, rng: random.Random) -> str:
+def _build_conclusion_section(brief: ContentBrief, rng: random.Random) -> dict:
     """Build a compelling conclusion with summary and CTA."""
     kw = brief.target_keyword
     kw_title = kw.title()
@@ -522,23 +526,25 @@ def _build_conclusion(brief: ContentBrief, rng: random.Random) -> str:
     cta = brief.cta_suggestions[-1] if brief.cta_suggestions else "Start putting these ideas into action today."
 
     conclusions = [
-        f"""<h2>Wrapping Up: Your Path Forward with {kw_title}</h2>
-<p>We've covered a lot of ground in this guide — from the fundamentals of <strong>{kw}</strong> to the nuanced strategies that set top performers apart. The most important takeaway? Knowledge without execution is just information. The {power} approach is to pick one or two insights from this guide and start implementing them now.</p>
-<p>Remember, mastering {kw} isn't about perfection from day one. It's about consistent, intentional progress. Each small improvement compounds over time, and before you know it, you'll be seeing real, measurable results.</p>
-<p><strong>{cta}</strong> If you found this guide helpful, consider bookmarking it for future reference — you'll likely want to revisit specific sections as you put these strategies into practice.</p>""",
-
-        f"""<h2>Final Thoughts on {kw_title}</h2>
-<p>If you've made it this far, you already have a significant advantage. Most people skim articles about <strong>{kw}</strong> without ever putting the ideas into practice. You now have a structured framework to work with — use it.</p>
-<p>The landscape of {kw} continues to evolve, but the core principles we've discussed remain constant. Focus on quality, stay consistent, and don't be afraid to experiment. The best strategy is the one you actually follow through on.</p>
-<p><strong>{cta}</strong> The gap between where you are and where you want to be is simply a matter of applied knowledge and persistence.</p>""",
-
-        f"""<h2>Key Takeaways and Next Steps</h2>
-<p>Let's bring it all together. <strong>{kw_title}</strong> is a topic with real depth — and now you have the tools and understanding to navigate it confidently. Whether you're applying these ideas for the first time or refining an existing approach, the principles remain the same: strategy first, execution second, optimization always.</p>
-<p>Don't try to do everything at once. Pick the area that will have the biggest impact for your specific situation and start there. Build momentum, track your progress, and adjust as you learn.</p>
-<p><strong>{cta}</strong></p>""",
+        (f"Wrapping Up: Your Path Forward with {kw_title}", [
+            f"We've covered a lot of ground in this guide — from the fundamentals of {kw} to the nuanced strategies that set top performers apart. The most important takeaway? Knowledge without execution is just information. The {power} approach is to pick one or two insights from this guide and start implementing them now.",
+            f"Remember, mastering {kw} isn't about perfection from day one. It's about consistent, intentional progress. Each small improvement compounds over time, and before you know it, you'll be seeing real, measurable results.",
+            f"{cta} If you found this guide helpful, consider bookmarking it for future reference — you'll likely want to revisit specific sections as you put these strategies into practice."
+        ]),
+        (f"Final Thoughts on {kw_title}", [
+            f"If you've made it this far, you already have a significant advantage. Most people skim articles about {kw} without ever putting the ideas into practice. You now have a structured framework to work with — use it.",
+            f"The landscape of {kw} continues to evolve, but the core principles we've discussed remain constant. Focus on quality, stay consistent, and don't be afraid to experiment. The best strategy is the one you actually follow through on.",
+            f"{cta} The gap between where you are and where you want to be is simply a matter of applied knowledge and persistence."
+        ])
     ]
 
-    return rng.choice(conclusions)
+    choice = rng.choice(conclusions)
+    return {
+        "id": "conclusion",
+        "type": "conclusion",
+        "heading": choice[0],
+        "body_paragraphs": choice[1]
+    }
 
 
 def _generate_fallback_headings(keyword: str, intent: str) -> list:
@@ -576,135 +582,151 @@ def _generate_fallback_headings(keyword: str, intent: str) -> list:
 # IMPROVED LLM PROMPT
 # ─────────────────────────────────────────────────────────────────────
 
+# ─────────────────────────────────────────────────────────────────────
+# IMPROVED LLM PROMPT
+# ─────────────────────────────────────────────────────────────────────
+
 def _build_prompt(brief: ContentBrief, existing_pages: list) -> str:
-    """Build a comprehensive prompt that produces human-quality, rankable content."""
+    """Build a comprehensive prompt that produces a JSON schema."""
     internal_links_str = "\n".join(
-        f"- {p.get('title', p.get('url'))} ({p.get('url')})"
+        f'- {{"title": "{p.get("title", p.get("url"))}", "url": "{p.get("url")}"}}'
         for p in existing_pages[:10]
     )
     faqs_str = "\n".join(f"- {q}" for q in brief.faq_questions)
     headings_str = "\n".join(f"- {h}" for h in brief.headings)
     lsi_str = ", ".join(brief.lsi_terms)
-    entities_str = ", ".join(brief.entity_mentions) if brief.entity_mentions else "N/A"
-    power_str = ", ".join(brief.power_words) if brief.power_words else "N/A"
-    variants_str = ", ".join(brief.target_keyword_variants[:5]) if brief.target_keyword_variants else "N/A"
+    entities_str = ", ".join(brief.entity_mentions) if brief.entity_mentions else "None"
+    power_str = ", ".join(brief.power_words) if brief.power_words else "None"
+    variants_str = ", ".join(brief.target_keyword_variants[:5]) if brief.target_keyword_variants else "None"
 
-    tone_instructions = {
-        "conversational": "Write like you're explaining to a smart friend over coffee — warm, direct, and engaging. Use contractions (you'll, it's, don't). Ask rhetorical questions. Share opinions.",
-        "authoritative": "Write with confident expertise. Use data-backed claims and precise language. Be direct and assertive, but not arrogant. Sound like a trusted industry advisor.",
-        "educational": "Write clearly and patiently. Explain concepts step-by-step. Use analogies and examples. Make complex ideas accessible without dumbing them down.",
-        "persuasive": "Write to convince. Lead with benefits, address objections, and build urgency. Use power words and clear calls-to-action. Every paragraph should move the reader toward a decision.",
-    }
-    tone_guide = tone_instructions.get(brief.tone, tone_instructions["conversational"])
-
-    return f"""You are a world-class SEO content writer with years of experience creating content that ranks #1 on Google. Write a comprehensive article that reads like it was written by a thoughtful human expert — NOT an AI.
+    return f"""You are a world-class SEO content writer. Write a comprehensive article that reads like a human expert wrote it, and return the result STRICTLY as a JSON object matching the provided schema.
 
 ═══════════════════════════════════════════
 CONTENT BRIEF
 ═══════════════════════════════════════════
-
 TARGET KEYWORD: {brief.target_keyword}
 TITLE: {brief.page_title}
 SEARCH INTENT: {brief.search_intent}
-CONTENT STRUCTURE: {brief.content_structure}
-TARGET WORD COUNT: {brief.word_count_target} words (minimum)
-READABILITY TARGET: Grade {brief.readability_target} (Flesch-Kincaid)
+TONE: {brief.tone}
+NICHE: {brief.niche}
+AUDIENCE: {brief.audience_type}
+PAIN POINTS: {', '.join(brief.pain_points) if brief.pain_points else 'General'}
+MONETIZATION: {', '.join(brief.monetary_aspects) if brief.monetary_aspects else 'None'}
+WORD COUNT TARGET: {brief.word_count_target}
 
 ═══════════════════════════════════════════
-SEMANTIC ELEMENTS
+ELEMENTS TO INCLUDE
 ═══════════════════════════════════════════
-
-REQUIRED H2 SUBHEADINGS:
+SUBHEADINGS:
 {headings_str}
 
-LSI TERMS TO INCLUDE NATURALLY:
-{lsi_str}
-
-KEYWORD VARIANTS TO USE:
-{variants_str}
-
-ENTITIES TO MENTION WHERE RELEVANT:
-{entities_str}
-
-POWER WORDS TO WEAVE IN:
-{power_str}
-
-FAQ QUESTIONS TO ANSWER:
+LSI TERMS: {lsi_str}
+KEYWORD VARIANTS: {variants_str}
+ENTITIES: {entities_str}
+POWER WORDS: {power_str}
+FAQ QUESTIONS:
 {faqs_str}
 
-EXISTING PAGES FOR INTERNAL LINKS:
+INTERNAL LINKS (use these in section.internal_links where relevant):
 {internal_links_str}
 
 ═══════════════════════════════════════════
-WRITING STYLE & TONE
+JSON SCHEMA EXPECTED
 ═══════════════════════════════════════════
+{{
+  "meta": {{"title": "{brief.page_title}", "description": "{brief.meta_description}", "slug": "{brief.url_slug}"}},
+  "content_metadata": {{"keyword": "{brief.target_keyword}", "niche": "{brief.niche}", "audience": "{brief.audience_type}", "tone": "{brief.tone}", "search_intent": "{brief.search_intent}", "word_count": <int>}},
+  "hero": {{"headline": "...", "subheadline": "...", "cta_text": "..."}},
+  "sections": [
+    {{
+      "id": "...", "type": "intro|body|conclusion", "heading": "...",
+      "body_paragraphs": ["string 1", "string 2"],
+      "callout": {{"type": "tip|warning|note", "text": "..."}}, // Optional
+      "internal_links": [{{"title": "...", "url": "..."}}] // Optional
+    }}
+  ],
+  "faq": [{{"question": "...", "answer": "..."}}],
+  "schema_markup": {{"article": true, "faq": true, "breadcrumb": true}}
+}}
 
-{tone_guide}
-
-CRITICAL ANTI-AI-DETECTION RULES:
-1. Vary your sentence length dramatically — mix short punchy sentences (5-8 words) with longer explanatory ones (20-30 words). Never write 3+ sentences of similar length in a row.
-2. Use contractions liberally: "you'll", "it's", "don't", "won't", "they're".
-3. Include 2-3 personal opinions or experience-based observations (e.g., "In my experience...", "I've found that...", "Honestly,").
-4. Use rhetorical questions — at least 3-4 throughout the article.
-5. Include at least one mild disagreement with common advice (e.g., "Contrary to popular belief...", "While most guides tell you X, I'd argue Y...").
-6. Start some sentences with "And", "But", "So", or "Because" — real writers do this.
-7. Use em-dashes (—) instead of excessive commas in at least 3-4 places.
-8. Include transitional phrases that feel natural, not robotic (avoid "Furthermore", "Moreover", "Additionally" — use "Here's the thing", "That said", "The bottom line").
-9. Don't use the word "crucial" more than once. Don't use "landscape", "tapestry", "delve", "robust", "leverage", "utilize", "paradigm", or "synergy" — these are AI tells.
-10. Write like you TALK. Read each paragraph aloud — if it sounds robotic, rewrite it.
-
-═══════════════════════════════════════════
-E-E-A-T SIGNALS (Experience, Expertise, Authority, Trust)
-═══════════════════════════════════════════
-
-- Show firsthand experience: reference practical applications, real scenarios, or "I've seen this work when..."
-- Demonstrate expertise: be specific, use precise terminology (but explain it), cite principles
-- Build authority: acknowledge other viewpoints, link to related content naturally
-- Earn trust: be transparent about limitations, don't oversell, admit when "it depends"
-
-═══════════════════════════════════════════
-FORMATTING RULES
-═══════════════════════════════════════════
-
-1. Write ONLY the article body HTML (no <html>, <head>, <body> tags)
-2. Start with an engaging hook — NO generic introductions
-3. Use exactly ONE <h1> with the title: "{brief.page_title}"
-4. Use the listed subheadings as <h2> tags
-5. Write at least {brief.word_count_target} words of detailed, original content
-6. Add a FAQ section at the end using <h2>Frequently Asked Questions</h2> with <h3> for each question
-7. Include LSI terms naturally — keyword density should be 1.5-2.5% for the primary keyword
-8. Add internal links where relevant using <a href="URL">descriptive anchor text</a>
-9. Use <strong> for key phrases (2-3 per section max)
-10. Use <blockquote> for important tips or callouts
-11. Include a compelling conclusion with a call-to-action
-
-Write the article now:"""
+CRITICAL INSTRUCTIONS:
+1. Return ONLY valid JSON block. NO markdown wrappers outside of ```json formatting.
+2. The `body_paragraphs` array must contain plain text strings, no HTML tags (no <p>, <strong>, etc.).
+3. Mix sentence lengths (5-8 words mixed with 20-30 words). Use contractions naturally. Include rhetorical questions.
+"""
 
 
 # ─────────────────────────────────────────────────────────────────────
-# HTML WRAPPER
+# HTML WRAPPER FOR DEPLOYMENT
 # ─────────────────────────────────────────────────────────────────────
 
-def _wrap_in_page(body_content: str, brief: ContentBrief) -> str:
-    """Wrap article body in a complete HTML page with meta tags, OG, and schema."""
-    schema_json = json.dumps(_build_schemas(brief), indent=2)
+def render_content_to_html(schema_dict: dict) -> str:
+    """Convert the JSON StructuredContent back into an HTML page for deployment."""
+    meta = schema_dict.get("meta", {})
+    hero = schema_dict.get("hero", {})
+    sections = schema_dict.get("sections", [])
+    faqs = schema_dict.get("faq", [])
+    
+    parts = []
+    
+    # Hero
+    parts.append(f"<h1>{hero.get('headline', '')}</h1>")
+    if hero.get("subheadline"):
+        parts.append(f"<p class='hero-sub'>{hero.get('subheadline')}</p>")
+        
+    # Sections
+    for sec in sections:
+        if sec.get("type") != "intro":
+            parts.append(f"<h2>{sec.get('heading', '')}</h2>")
+            
+        for p in sec.get("body_paragraphs", []):
+            parts.append(f"<p>{p}</p>")
+            
+        if sec.get("callout"):
+            callout = sec.get("callout")
+            parts.append(f"<blockquote class='callout-{callout.get('type', 'note')}'><strong>{callout.get('type', 'Note').title()}:</strong> {callout.get('text', '')}</blockquote>")
+            
+        for link in sec.get("internal_links", []):
+            parts.append(f"<p>Related: <a href='{link.get('url', '')}'>{link.get('title', '')}</a></p>")
+            
+    # FAQ
+    if faqs:
+        parts.append("<h2>Frequently Asked Questions</h2>")
+        for faq in faqs:
+            parts.append(f"<h3>{faq.get('question', '')}</h3>")
+            parts.append(f"<p>{faq.get('answer', '')}</p>")
+            
+    body_content = "\n".join(parts)
+    
+    schema_markup = schema_dict.get("schema_markup", {})
+    
+    # NOTE: _build_schemas is kept below for convenience, or you can construct it
+    try:
+        schema_json = json.dumps(_build_schemas(ContentBrief(**{
+            "target_keyword": schema_dict.get("content_metadata", {}).get("keyword", ""),
+            "url_slug": meta.get("slug", ""),
+            "page_title": meta.get("title", ""),
+            "meta_description": meta.get("description", ""),
+        })), indent=2)
+    except:
+        schema_json = "{}"
 
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{brief.page_title}</title>
-    <meta name="description" content="{brief.meta_description}">
+    <title>{meta.get("title", "")}</title>
+    <meta name="description" content="{meta.get("description", "")}">
     <meta name="robots" content="index, follow">
-    <meta property="og:title" content="{brief.page_title}">
-    <meta property="og:description" content="{brief.meta_description}">
+    <meta property="og:title" content="{meta.get("title", "")}">
+    <meta property="og:description" content="{meta.get("description", "")}">
     <meta property="og:type" content="article">
-    <meta property="og:url" content="/{brief.url_slug}">
+    <meta property="og:url" content="/{meta.get("slug", "")}">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{brief.page_title}">
-    <meta name="twitter:description" content="{brief.meta_description}">
-    <link rel="canonical" href="/{brief.url_slug}">
+    <meta name="twitter:title" content="{meta.get("title", "")}">
+    <meta name="twitter:description" content="{meta.get("description", "")}">
+    <link rel="canonical" href="/{meta.get("slug", "")}">
     <script type="application/ld+json">
 {schema_json}
     </script>

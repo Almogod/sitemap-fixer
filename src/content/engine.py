@@ -116,15 +116,19 @@ def generate_content_for_keyword(keyword, competitor_urls, llm_config, existing_
     try:
         logger.info(f"Generating content for keyword: {keyword}")
 
-        # 1. Build Brief (this never needs an API)
+        # 1. Build Brief
         brief = analyze_competitors(competitor_urls, keyword, "")
 
-        # 2. Generate Page (API or built-in — handled internally)
+        # 2. Generate Page
         result = generate_page(brief, llm_config, existing_pages)
 
         # 3. Post-generation quality check
         quality = _assess_content_quality(result, keyword)
         result["quality_score"] = quality
+
+        # Add HTML to the result payload for UI/Deployment use
+        from src.content.page_generator import render_content_to_html
+        result["html"] = render_content_to_html(result.get("schema_data", {}))
 
         logger.info(
             f"Content generated for '{keyword}': "
@@ -146,7 +150,8 @@ def _assess_content_quality(result: dict, keyword: str) -> dict:
       - Keyword density
       - Has all required HTML elements
     """
-    html = result.get("html", "")
+    from src.content.page_generator import render_content_to_html
+    html = render_content_to_html(result.get("schema_data", {}))
     word_count = result.get("word_count", 0)
     text = re.sub(r"<[^>]+>", " ", html).lower()
     words = text.split()

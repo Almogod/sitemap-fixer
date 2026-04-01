@@ -65,6 +65,12 @@ class ContentBrief:
     schema_type: str = "Article"
     category: Optional[str] = None
 
+    # ── Structured JSON Schema attributes ─────────────────────────────
+    niche: str = ""
+    audience_type: str = "General Audience"
+    pain_points: List[str] = field(default_factory=list)
+    monetary_aspects: List[str] = field(default_factory=list)
+
     def to_dict(self) -> dict:
         return {
             "target_keyword": self.target_keyword,
@@ -87,4 +93,8 @@ class ContentBrief:
             "competitor_urls": self.competitor_urls,
             "schema_type": self.schema_type,
             "category": self.category,
+            "niche": self.niche,
+            "audience_type": self.audience_type,
+            "pain_points": self.pain_points,
+            "monetary_aspects": self.monetary_aspects,
         }

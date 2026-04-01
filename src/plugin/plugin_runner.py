@@ -146,34 +146,11 @@ def run_plugin(
                 report["site_keywords"] = content_res.get("site_keywords", [])
                 
                 existing_pages_list = [{"url": p["url"], "title": _get_title(p)} for p in context_data["pages"]]
-
-                if keyword_gaps:
-                    for rec in keyword_gaps[:5]:
-                        keyword = rec["keyword"]
-                        source_comp = rec["source"]
-                        try:
-                            progress(f"Generating content for: {keyword} (Source: {source_comp})")
-                            from src.content.engine import generate_content_for_keyword
-                            generated = generate_content_for_keyword(keyword, [source_comp], llm_config, existing_pages_list)
-                            
-                            if "error" not in generated:
-                                report["pages_generated"].append({
-                                    "keyword": keyword,
-                                    "slug": generated["slug"],
-                                    "title": generated["meta_title"],
-                                    "word_count": generated["word_count"],
-                                    "html": generated["html"],
-                                    "approved": True
-                                })
-                            else:
-                                report["errors"].append({"phase": "generate", "item": keyword, "error": generated["error"]})
-                        except Exception as e:
-                            report["errors"].append({
-                                "phase": "generate",
-                                "item": keyword,
-                                "error": str(e),
-                                "code": "GENERATION_ERROR"
-                            })
+                
+                # Store recommendations for UI to allow user to trigger generation
+                report["content_generation_available"] = bool(keyword_gaps)
+                report["keyword_recommendations"] = keyword_gaps
+                report["existing_pages_list"] = existing_pages_list
 
         if dry_run:
             progress("Dry run complete. No changes would be applied.")
