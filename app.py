@@ -1,4 +1,5 @@
 import os
+import json
 import sys
 import asyncio
 import time
@@ -260,6 +261,9 @@ def run_plugin_task(
     site_url: str = Form(...),
     competitors: str = Form(""),
     limit: int = Form(100),
+    max_depth: int = Form(10),
+    crawl_assets: bool = Form(False),
+    crawler_backend: str = Form("memory"),
     openai_key: Optional[str] = Form(None),
     gemini_key: Optional[str] = Form(None),
     ollama_host: Optional[str] = Form(None),
