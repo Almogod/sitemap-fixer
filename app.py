@@ -369,6 +369,9 @@ def approve_plugin_fixes(
         "webhook_url": webhook_url
     }
     
+    report = task_store.get_results(task_id) or {}
+    llm_config = report.get("llm_config")
+
     from src.plugin.plugin_runner import apply_approved_plugin_fixes
     background_tasks.add_task(
         apply_approved_plugin_fixes,
@@ -376,6 +379,7 @@ def approve_plugin_fixes(
         approved_action_ids=action_ids,
         approved_page_keywords=page_keywords,
         deploy_config=deploy_config,
+        llm_config=llm_config,
         site_token=site_token
     )
     

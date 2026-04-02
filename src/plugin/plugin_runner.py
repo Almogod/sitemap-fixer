@@ -87,7 +87,8 @@ def run_plugin(
         "seo_score_before": None,
         "errors": [],
         "state": "pending_approval",
-        "dry_run": dry_run
+        "dry_run": dry_run,
+        "llm_config": llm_config
     }
 
     # Shared data for output chaining between phases
@@ -172,7 +173,7 @@ def run_plugin(
         task_store.save_results(task_id, report)
 
 
-def apply_approved_plugin_fixes(task_id, approved_action_ids, approved_page_keywords, deploy_config, site_token=None):
+def apply_approved_plugin_fixes(task_id, approved_action_ids, approved_page_keywords, deploy_config, llm_config=None, site_token=None):
     """
     Second phase of the plugin: apply only WHAT the user approved.
     """
@@ -188,6 +189,7 @@ def apply_approved_plugin_fixes(task_id, approved_action_ids, approved_page_keyw
         task_store.set_status(task_id, msg)
 
     report["state"] = "deploying"
+    task_store.save_results(task_id, report)
     
     try:
         # 1. Apply HTML Fixes
@@ -235,6 +237,9 @@ def apply_approved_plugin_fixes(task_id, approved_action_ids, approved_page_keyw
                 latest_commit_sha = deploy_result.get("commit_sha")
             report["deploy_results"].append(deploy_result)
             report["fixes_applied"].append({"url": url, "actions": len(url_actions), "deploy": deploy_result.get("success", False)})
+        
+        # Periodic save to keep UI updated
+        task_store.save_results(task_id, report)
 
         # 2. Deploy Generated Pages
         pages_to_gen = [p for p in report.get("pages_generated", []) if p["keyword"] in approved_page_keywords]
