@@ -50,3 +50,16 @@ class PluginApproveRequest(BaseModel):
     method: str = "github"
     deploy_config: Optional[DeployConfig] = None
     site_token: Optional[SecretStr] = None
+
+class KeywordGenerationRequest(BaseModel):
+    task_id: str
+    keyword: str
+    competitors: Optional[List[str]] = None
+    openai_key: Optional[str] = None
+    gemini_key: Optional[str] = None
+    ollama_host: Optional[str] = None
+
+class ContentUpdateRequest(BaseModel):
+    task_id: str
+    keyword: str
+    schema_data: str

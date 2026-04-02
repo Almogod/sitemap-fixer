@@ -1,7 +1,6 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
-from src.schemas.request import PluginRunRequest, PluginApproveRequest
-from src.services.auth import verify_token
+from src.schemas.request import PluginRunRequest, PluginApproveRequest, KeywordGenerationRequest, ContentUpdateRequest
 from src.services.task_store import task_store
 from src.plugin.plugin_runner import run_plugin, apply_approved_plugin_fixes
 from src.utils.logger import logger
@@ -13,7 +12,7 @@ from typing import Optional
 
 router = APIRouter()
 
-@router.post("/run", dependencies=[Depends(verify_token)])
+@router.post("/run")
 async def run_plugin_task(
     data: PluginRunRequest,
     background_tasks: BackgroundTasks
@@ -69,13 +68,13 @@ async def run_plugin_task(
             "concurrency": data.concurrency,
             "custom_selectors": data.custom_selectors
         },
-        site_token=data.site_token.get_secret_value() if data.site_token else None,
+        site_token=None,
         deploy_config={} 
     )
     
     return JSONResponse(content={"status": "started", "task_id": task_id})
 
-@router.post("/approve", dependencies=[Depends(verify_token)])
+@router.post("/approve")
 async def approve_plugin_fixes(
     data: PluginApproveRequest,
     background_tasks: BackgroundTasks
@@ -95,7 +94,7 @@ async def approve_plugin_fixes(
         approved_page_keywords=data.approved_pages,
         deploy_config=deploy_config,
         llm_config=llm_config,
-        site_token=data.site_token.get_secret_value() if data.site_token else None
+        site_token=None
     )
     
     return JSONResponse(content={"status": "deployment_started", "task_id": data.task_id})
@@ -116,12 +115,17 @@ def download_plugin_report(task_id: str):
     generate_seo_pdf(results, file_path)
     return FileResponse(file_path, filename=report_file)
 
+@router.post("/generate_content")
+async def generate_keyword_content(
+    data: KeywordGenerationRequest,
+    background_tasks: BackgroundTasks
+):
     from src.content.engine import generate_content_for_keyword
     
     # Merging logic for standalone generation
-    final_openai = openai_key or (config.OPENAI_API_KEY.get_secret_value() if config.OPENAI_API_KEY else None)
-    final_gemini = gemini_key or (config.GEMINI_API_KEY.get_secret_value() if config.GEMINI_API_KEY else None)
-    final_ollama = ollama_host or config.OLLAMA_HOST
+    final_openai = data.openai_key or (config.OPENAI_API_KEY.get_secret_value() if config.OPENAI_API_KEY else None)
+    final_gemini = data.gemini_key or (config.GEMINI_API_KEY.get_secret_value() if config.GEMINI_API_KEY else None)
+    final_ollama = data.ollama_host or config.OLLAMA_HOST
     
     provider = "openai" if final_openai else ("gemini" if final_gemini else "ollama")
     api_key = final_openai or final_gemini or (final_ollama if provider == "ollama" else None)
@@ -134,13 +138,13 @@ def download_plugin_report(task_id: str):
 
     background_tasks.add_task(
         _run_and_save_keyword_content,
-        task_id=task_id,
-        keyword=keyword,
-        competitors=competitors.split(",") if competitors else [],
+        task_id=data.task_id,
+        keyword=data.keyword,
+        competitors=data.competitors or [],
         llm_config=llm_config
     )
     
-    return JSONResponse(content={"status": "generation_started", "task_id": task_id})
+    return JSONResponse(content={"status": "generation_started", "task_id": data.task_id})
 
 async def _run_and_save_keyword_content(task_id, keyword, competitors, llm_config):
     from src.content.engine import generate_content_for_keyword
@@ -160,5 +164,32 @@ async def _run_and_save_keyword_content(task_id, keyword, competitors, llm_confi
             task_store.set_status(task_id, f"Generated content for {keyword}")
     except Exception as e:
         logger.error(f"Background generation failed: {e}")
-         # but for modularity I'll just refactor it in a follow up if requested.
-         # For now I'm just focusing on the core routers.
+
+@router.post("/update_content")
+async def update_content(
+    data: ContentUpdateRequest
+):
+    try:
+        report = task_store.get_results(data.task_id)
+        if not report:
+            return JSONResponse(status_code=404, content={"error": "Task results not found"})
+        
+        updated_data = json.loads(data.schema_data)
+        
+        # Find and update the keyword content
+        updated = False
+        if "pages_generated" in report:
+            for page in report["pages_generated"]:
+                if page.get("keyword") == data.keyword:
+                    page.update(updated_data)
+                    updated = True
+                    break
+        
+        if not updated:
+            return JSONResponse(status_code=404, content={"error": "Keyword not found in results"})
+            
+        task_store.save_results(data.task_id, report)
+        return JSONResponse(content={"status": "success", "message": f"Updated content for {data.keyword}"})
+    except Exception as e:
+        logger.error(f"Failed to update content: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})

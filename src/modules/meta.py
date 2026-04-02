@@ -11,66 +11,57 @@ def run(context):
 
     pages = context["pages"]
 
-    issues = {
-        "missing_title": [],
-        "missing_description": [],
-        "missing_h1": [],
-        "multiple_h1": []
-    }
+    # Standardized enriched issue format
+    enriched_issues = [
+        {"type": "missing_title", "severity": "critical", "pages": []},
+        {"type": "missing_description", "severity": "major", "pages": []},
+        {"type": "missing_h1", "severity": "major", "pages": []},
+        {"type": "multiple_h1", "severity": "minor", "pages": []}
+    ]
+
+    # Helper to find issue in list
+    def get_issue(issue_type):
+        for i in enriched_issues:
+            if i["type"] == issue_type: return i
+        return None
 
     fixes = {}
 
     for page in pages:
-
         html = page.get("html")
         url = page.get("url")
-
-        if not html:
-            continue
+        if not html: continue
 
         soup = BeautifulSoup(html, "lxml")
-
         title_tag = soup.find("title")
         desc_tag = soup.find("meta", attrs={"name": "description"})
         h1_tags = soup.find_all("h1")
 
-        # -----------------------------
-        # TITLE ANALYSIS
-        # -----------------------------
         if not title_tag or not title_tag.text.strip():
-            issues["missing_title"].append(url)
+            get_issue("missing_title")["pages"].append(url)
             title = generate_title(url, soup)
         else:
             title = title_tag.text.strip()
 
-        # -----------------------------
-        # DESCRIPTION ANALYSIS
-        # -----------------------------
         if not desc_tag or not desc_tag.get("content"):
-            issues["missing_description"].append(url)
+            get_issue("missing_description")["pages"].append(url)
             description = generate_description(soup)
         else:
             description = desc_tag.get("content")
 
-        # -----------------------------
-        # H1 ANALYSIS
-        # -----------------------------
         if not h1_tags:
-            issues["missing_h1"].append(url)
+            get_issue("missing_h1")["pages"].append(url)
 
         if len(h1_tags) > 1:
-            issues["multiple_h1"].append(url)
+            get_issue("multiple_h1")["pages"].append(url)
 
-        # -----------------------------
-        # FIX SUGGESTION
-        # -----------------------------
         fixes[url] = {
             "title": title[:60],
             "description": description[:155]
         }
 
     return {
-        "issues": issues,
+        "issues": enriched_issues,
         "fixes": fixes
     }
 

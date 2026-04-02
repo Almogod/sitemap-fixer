@@ -291,7 +291,7 @@
                         <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                             <a href="{{p.url}}" target="_blank" title="{{p.url}}">{{p.url}}</a>
                         </td>
-                        <td><span class="badge" style="font-size: 0.65rem;">{{ p.content_type.split('/')[-1]|upper }}</span></td>
+                        <td><span class="badge" style="font-size: 0.65rem;">{{ (p.content_type | default('text/unknown')).split('/')[-1]|upper }}</span></td>
                         <td><span class="{% if p.status == 200 %}stat-good{% else %}stat-bad{% endif %}" style="font-weight: 700;">{{p.status}}</span></td>
                         <td>{{p.response_time_ms}}</td>
                         <td>{{p.links|length if p.links else 0}}</td>
@@ -879,30 +879,24 @@
         document.getElementById('ai-config-forms').classList.remove('hidden');
     }
 
-    function toggleAdvanced(btn) {
-        const content = btn.nextElementSibling;
-        content.classList.toggle('open');
+    const navBtn = document.querySelector('.nav-btn');
+    if (navBtn) {
+        navBtn.addEventListener('click', () => {
+            document.querySelector('.content-area').scrollIntoView({ behavior: 'smooth' });
+        });
     }
 
-    // --- Tab Switching ---
     function switchTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        
         document.getElementById(tabId).classList.add('active');
         event.target.classList.add('active');
-
-        // Clear any loading state and reset forms when switching tabs
-        const overlay = document.getElementById('loading-overlay');
-        if (overlay) overlay.classList.add('hidden');
-        document.getElementById('thinking-steps').innerHTML = '';
     }
 
-    // --- Form Submission & Polling ---
     function handleFormSubmit(formId, endpoint) {
         const form = document.getElementById(formId);
         if (!form) return;
-
+        
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -930,7 +924,40 @@
 
             const taskId = Math.random().toString(36).substring(2, 15);
             const formData = new FormData(this);
-            formData.append('task_id', taskId);
+            
+            // CONVERT FORM DATA TO TYPED JSON
+            const data = { task_id: taskId };
+            formData.forEach((value, key) => {
+                // Type casting for Pydantic
+                if (value === 'true') value = true;
+                if (value === 'false') value = false;
+                if (!isNaN(value) && value.trim() !== "" && key !== 'domain' && key !== 'site_url' && key !== 'openai_key' && key !== 'gemini_key') {
+                    value = Number(value);
+                }
+                
+                if (key === 'custom_selectors') {
+                    if (value && value.trim() !== "") {
+                        try { value = JSON.parse(value); } catch(e) { console.error("Invalid custom_selectors JSON"); value = null; }
+                    } else {
+                        value = null;
+                    }
+                }
+                
+                if (key === 'competitors') {
+                    if (value && value.trim() !== "") {
+                        value = value.split(',').map(s => s.trim()).filter(s => s !== "");
+                    } else {
+                        value = [];
+                    }
+                }
+
+                // Handle empty Optional[SecretStr] or Optional[str] fields as null
+                if (['openai_key', 'gemini_key', 'site_token', 'ollama_host'].includes(key)) {
+                    if (!value || value.trim() === "") value = null;
+                }
+                
+                data[key] = value;
+            });
             
             if (statusDisplay) statusDisplay.innerText = 'Connecting to UrlForge...';
             let lastStatus = "";
@@ -940,22 +967,16 @@
                     const statusRes = await fetch('/progress?task_id=' + taskId);
                     if (statusRes.ok) {
                         const statusData = await statusRes.json();
-                        
-                        // /progress returns { status: "<message string>", state: "...", error: null }
                         const currentStatus = statusData.status;
                         if (currentStatus && currentStatus !== lastStatus) {
                             lastStatus = currentStatus;
-                            
-                            // Interaction with Brain Engine
                             if (window.brain) window.brain.showCategory(currentStatus);
-
-                            // Sequential update with animation
                             statusDisplay.style.opacity = '0';
                             setTimeout(() => {
                                 statusDisplay.innerText = currentStatus;
                                 statusDisplay.style.opacity = '1';
                                 statusDisplay.classList.remove('status-fade-in');
-                                void statusDisplay.offsetWidth; // trigger reflow
+                                void statusDisplay.offsetWidth;
                                 statusDisplay.classList.add('status-fade-in');
                             }, 300);
                         }
@@ -972,14 +993,9 @@
                         
                         if (statusData.state === 'completed' || statusData.state === 'pending_approval' || statusData.state === 'failed') {
                             clearInterval(pollInterval);
-                            
-                            // Return to Results Mode
                             document.body.classList.remove('analytical-mode');
                             document.body.classList.add('mode-results');
-                            if (window.brain) {
-                                window.brain.stopThinking();
-                            }
-
+                            if (window.brain) window.brain.stopThinking();
                             setTimeout(() => {
                                 window.location.href = '/results?task_id=' + taskId;
                             }, 500);
@@ -991,7 +1007,11 @@
             }, 1000);
 
             try {
-                const res = await fetch(endpoint, { method: 'POST', body: formData });
+                const res = await fetch(endpoint, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data) 
+                });
                 if (!res.ok) {
                     clearInterval(pollInterval);
                     overlay.classList.add('hidden');
@@ -1016,61 +1036,40 @@
     handleFormSubmit('generate-form', '/generate');
     handleFormSubmit('plugin-form', '/plugin/run');
 
-    // --- Approval Workflow ---
     function toggleAll(master) {
         document.querySelectorAll('.action-check').forEach(c => c.checked = master.checked);
     }
     function toggleAllPages(master) {
         document.querySelectorAll('.page-check').forEach(c => c.checked = master.checked);
     }
-    function showAuthForm() {
-        document.getElementById('review-area').style.opacity = '0.5';
-        document.getElementById('review-area').style.pointerEvents = 'none';
-        document.getElementById('auth-section').classList.remove('approved-only');
-        document.getElementById('auth-section').scrollIntoView({ behavior: 'smooth' });
-    }
     function toggleDeployFields() {
         const method = document.getElementById('deploy_method').value;
         const allGroups = document.querySelectorAll('.deploy-group');
         allGroups.forEach(g => g.classList.add('hidden'));
-        
         const activeGroup = document.getElementById(method + '-fields');
-        if (activeGroup) {
-            activeGroup.classList.remove('hidden');
-            // Specifically show advanced fields for github if needed, or keep them optional
-            if (method === 'github') {
-                // Ensure advanced repo/branch are prompted or visible if not set
-            }
-        }
+        if (activeGroup) activeGroup.classList.remove('hidden');
     }
     async function generateContentForKeyword(kw, comp) {
         const btn = event.target;
         const originalText = btn.innerText;
         btn.disabled = true;
         btn.innerText = "Generating...";
-        
         try {
-            const formData = new FormData();
-            formData.append('task_id', '{{task_id}}');
-            formData.append('keyword', kw);
-            formData.append('competitors', comp);
-            
-            // Get LLM keys from existing forms if available or prompt user?
-            // For now, assume they were used in the initial analysis and stored 
-            // In a better version we'd store specialized plugin state.
-            
-            const response = await fetch('/plugin/generate_content', {
-                method: 'POST',
-                body: formData
+            const payload = {
+                task_id: '{{task_id}}',
+                keyword: kw,
+                competitors: comp ? comp.split(',').map(s => s.trim()) : []
+            };
+            const response = await fetch('/plugin/generate_content', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload) 
             });
             const data = await response.json();
-            
             if (data.status === 'generation_started') {
                 alert(`Content generation started for "${kw}". Check progress below.`);
                 btn.innerText = "Started";
-                setTimeout(() => {
-                    location.reload(); // Quick refresh to show the new pages in the "AI Pages" table
-                }, 2000);
+                setTimeout(() => { location.reload(); }, 2000);
             } else {
                 alert("Failed: " + (data.error || "Unknown error"));
                 btn.innerText = originalText;
@@ -1082,8 +1081,6 @@
             btn.disabled = false;
         }
     }
-    
-    // --- Content Editor ---
     function openContentEditor(keyword, btn) {
         const schemaData = btn.getAttribute('data-schema');
         document.getElementById('editor-keyword').innerText = keyword;
@@ -1091,45 +1088,37 @@
         document.getElementById('editor-textarea').value = JSON.stringify(JSON.parse(schemaData), null, 2);
         document.getElementById('content-editor-modal').classList.remove('hidden');
     }
-    
     function closeContentEditor() {
         document.getElementById('content-editor-modal').classList.add('hidden');
     }
-    
     async function saveContent() {
         const keyword = document.getElementById('editor-keyword-input').value;
         const schemaDataValue = document.getElementById('editor-textarea').value;
         const saveBtn = document.getElementById('editor-save-btn');
         const originalText = saveBtn.innerText;
-        
         try {
-            JSON.parse(schemaDataValue); // Validates JSON format
+            JSON.parse(schemaDataValue);
         } catch(e) {
             alert("Invalid JSON schema. Please correct errors before saving.");
             return;
         }
-        
         saveBtn.disabled = true;
         saveBtn.innerText = "Saving...";
-        
         try {
-            const formData = new FormData();
-            formData.append('task_id', '{{task_id}}');
-            formData.append('keyword', keyword);
-            formData.append('schema_data', schemaDataValue);
-            
-            const res = await fetch('/plugin/update_content', {
-                method: 'POST',
-                body: formData
+            const payload = {
+                task_id: '{{task_id}}',
+                keyword: keyword,
+                schema_data: schemaDataValue
+            };
+            const res = await fetch('/plugin/update_content', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload) 
             });
             const data = await res.json();
-            
             if (data.status === 'success') {
                 saveBtn.innerText = "Saved!";
-                setTimeout(() => {
-                    closeContentEditor();
-                    location.reload();
-                }, 1000);
+                setTimeout(() => { closeContentEditor(); location.reload(); }, 1000);
             } else {
                 alert("Failed to save: " + data.error);
                 saveBtn.innerText = originalText;
@@ -1141,7 +1130,6 @@
             saveBtn.disabled = false;
         }
     }
-
     function downloadPDF() {
         window.open('/plugin/download_report?task_id={{task_id}}', '_blank');
     }
@@ -1151,51 +1139,62 @@
         approvalForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const formData = new FormData(this);
-            
             const actionChecks = document.querySelectorAll('.action-check:checked');
             const pageChecks = document.querySelectorAll('.page-check:checked');
             const actionIds = Array.from(actionChecks).map(c => c.dataset.id);
             const pageKeywords = Array.from(pageChecks).map(c => c.dataset.keyword);
             
-            formData.append('approved_actions', actionIds.join(','));
-            formData.append('approved_pages', pageKeywords.join(','));
+            // NEST CONFIGURATION FOR JSON
+            const payload = {
+                task_id: formData.get('task_id'),
+                method: formData.get('method'),
+                approved_actions: actionIds,
+                approved_pages: pageKeywords,
+                site_token: formData.get('site_token') || null,
+                deploy_config: {
+                    platform: formData.get('method'),
+                    github_token: formData.get('github_token'),
+                    github_repo: formData.get('github_repo'),
+                    github_branch: formData.get('github_branch'),
+                    vercel_token: formData.get('vercel_token'),
+                    vercel_project_id: formData.get('vercel_project_id'),
+                    vercel_team_id: formData.get('vercel_team_id'),
+                    hostinger_api_key: formData.get('hostinger_api_key'),
+                    hostinger_host: formData.get('hostinger_host'),
+                    hostinger_user: formData.get('hostinger_user'),
+                    hostinger_site_id: formData.get('hostinger_site_id'),
+                    ftp_host: formData.get('ftp_host'),
+                    ftp_user: formData.get('ftp_user'),
+                    ftp_pass: formData.get('ftp_pass'),
+                    webhook_url: formData.get('webhook_url')
+                }
+            };
             
-            // Cinematic Transition
             document.body.classList.add('analytical-mode');
-            if (window.brain) {
-                window.brain.startThinking();
-            }
-
+            if (window.brain) window.brain.startThinking();
             const overlay = document.getElementById('loading-overlay');
             const statusDisplay = document.getElementById('status-display');
             overlay.classList.remove('hidden');
             overlay.style.background = 'transparent'; 
             overlay.style.backdropFilter = 'none';
-            if (statusDisplay) {
-                statusDisplay.innerText = 'Applying & Deploying approved fixes...';
-            }
-            
+            if (statusDisplay) statusDisplay.innerText = 'Applying & Deploying approved fixes...';
             try {
-                const res = await fetch('/plugin/approve', { method: 'POST', body: formData });
+                const res = await fetch('/plugin/approve', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload) 
+                });
                 if (res.ok) {
-                    // Start polling the same task_id
                     let lastStatus = "";
                     const pollInterval = setInterval(async () => {
                         try {
-                            const statusRes = await fetch('/progress?task_id={{task_id}}');
+                            const statusRes = await fetch('/progress?task_id=' + payload.task_id);
                             if (statusRes.ok) {
                                 const statusData = await statusRes.json();
-                                
                                 const currentStatus = statusData.status;
                                 if (currentStatus && currentStatus !== lastStatus) {
                                     lastStatus = currentStatus;
-                                const currentStatus = statusData.status;
-                                if (currentStatus && currentStatus !== lastStatus) {
-                                    lastStatus = currentStatus;
-                                    
-                                    // Interaction with Brain Engine
                                     if (window.brain) window.brain.showCategory(currentStatus);
-
                                     statusDisplay.style.opacity = '0';
                                     setTimeout(() => {
                                         statusDisplay.innerText = currentStatus;
@@ -1205,33 +1204,21 @@
                                         statusDisplay.classList.add('status-fade-in');
                                     }, 300);
                                 }
-                                }
-
                                 if (statusData.state === 'error') {
                                     clearInterval(pollInterval);
                                     overlay.classList.add('hidden');
                                     alert('Error: ' + (statusData.error || 'Unknown error'));
                                     return;
                                 }
-                                
                                 if (statusData.state === 'completed' || statusData.state === 'failed') {
                                     clearInterval(pollInterval);
-
-                                    // Return to Results Mode
                                     document.body.classList.remove('analytical-mode');
                                     document.body.classList.add('mode-results');
-                                    if (window.brain) {
-                                        window.brain.stopThinking();
-                                    }
-
-                                    setTimeout(() => {
-                                        location.reload();
-                                    }, 500);
+                                    if (window.brain) window.brain.stopThinking();
+                                    setTimeout(() => { location.reload(); }, 500);
                                 }
                             }
-                        } catch (err) {
-                            console.error("Polling error:", err);
-                        }
+                        } catch (err) { console.error("Polling error:", err); }
                     }, 1000);
                 } else {
                     alert("Approval submission failed");

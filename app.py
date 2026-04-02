@@ -36,7 +36,6 @@ if os.getenv("SENTRY_DSN"):
 # Core modules
 from src.config import config
 from src.utils.logger import logger, audit_logger
-from src.services.auth import verify_token, admin_only
 from src.services.task_store import task_store
 from src.utils.security import is_safe_path
 
@@ -108,6 +107,8 @@ from src.api.router_plugin import router as plugin_router
 app.include_router(tasks_router, tags=["Tasks"])
 app.include_router(crawl_router, tags=["Crawl"])
 app.include_router(plugin_router, prefix="/plugin", tags=["Plugin"])
+
+# Auth layer removed by user request
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):

@@ -3,7 +3,6 @@ from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from src.services.task_store import task_store
 from src.utils.security import is_safe_path
 from src.config import config
-from src.services.auth import verify_token
 import os
 import psutil
 import time
@@ -31,7 +30,7 @@ def health_check():
     }
 
 @router.get("/download")
-def download_file(file: str, payload: dict = Depends(verify_token)):
+def download_file(file: str):
     base_dir = os.getcwd()
     if not is_safe_path(file, base_dir):
         raise HTTPException(status_code=403, detail="Access denied")

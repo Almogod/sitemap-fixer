@@ -1,7 +1,6 @@
-from fastapi import APIRouter, Request, BackgroundTasks, Depends
+from fastapi import APIRouter, Request, BackgroundTasks
 from fastapi.responses import JSONResponse
 from src.schemas.request import GenerateRequest
-from src.services.auth import verify_token
 from src.services.task_store import task_store
 from src.services.generator import generate_sitemaps
 from src.services.sitemap_parser import get_sitemap_urls
@@ -94,7 +93,7 @@ def run_analysis_task(task_id: str, domain: str, limit: int, use_js: bool, fix_c
         logger.error(f"Error in analysis task: {str(e)}")
         task_store.set_status(task_id, f"Error: {str(e)}", error=str(e))
 
-@router.post("/generate", dependencies=[Depends(verify_token)])
+@router.post("/generate")
 async def generate(
     data: GenerateRequest,
     background_tasks: BackgroundTasks

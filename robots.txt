@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://https://github.com/Almogod/PCAcademy-/sitemap.xml
+Sitemap: https://https://www.qcecuring.com/sitemap.xml

@@ -107,8 +107,8 @@ def run_engine(pages, clean_urls, domain, graph, competitors=None, progress_call
     # -----------------------------
     # COMPUTE SEO SCORE
     # -----------------------------
-    results["seo_score"] = compute_score(results)
     results["pages"] = pages
+    results["seo_score"] = compute_score(results)
 
     logger.info("SEO engine finished")
 

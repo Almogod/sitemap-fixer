@@ -76,6 +76,18 @@ async def _run_async(context):
         results = await asyncio.gather(*tasks)
 
     # 3. Map results back to issues and suggestions
+    enriched_issues = [
+        {"type": "broken_link_internal", "severity": "critical", "pages": []},
+        {"type": "broken_link_external", "severity": "major", "pages": []},
+        {"type": "redirect_chain", "severity": "minor", "pages": []}
+    ]
+
+    def get_issue(issue_type):
+        for i in enriched_issues:
+            if i["type"] == issue_type: return i
+        return None
+
+    # 3. Map results back to issues and suggestions
     link_results = dict(zip(unique_links.keys(), results))
     
     for link, res in link_results.items():
@@ -92,17 +104,11 @@ async def _run_async(context):
 
         # Categorize
         if status >= 400 or status == 0:
+            issue_type = "broken_link_external" if is_external else "broken_link_internal"
+            issue_obj = get_issue(issue_type)
             for source in unique_links[link]:
                 url = source["url"]
-                issues.append({
-                    "url": url,
-                    "issue": "broken_link",
-                    "link": link,
-                    "is_external": is_external,
-                    "context": source["context"],
-                    "status": status,
-                    "error_category": error_type or ("http_error" if status >= 400 else "unknown")
-                })
+                issue_obj["pages"].append(url)
                 if url not in suggestions:
                     suggestions[url] = []
                 suggestions[url].append({
@@ -112,15 +118,10 @@ async def _run_async(context):
                 })
         
         elif redirect_count > MAX_REDIRECTS_TO_FLAG:
+            issue_obj = get_issue("redirect_chain")
             for source in unique_links[link]:
                 url = source["url"]
-                issues.append({
-                    "url": url,
-                    "issue": "redirect_chain",
-                    "link": link,
-                    "is_external": is_external,
-                    "redirects": redirect_count
-                })
+                issue_obj["pages"].append(url)
                 if url not in suggestions:
                     suggestions[url] = []
                 suggestions[url].append({
@@ -130,7 +131,7 @@ async def _run_async(context):
                 })
 
     return {
-        "issues": issues,
+        "issues": enriched_issues,
         "suggestions": suggestions
     }
 

@@ -1,6 +1,6 @@
 import os
 import yaml
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, SecretStr
 from typing import Optional, List
 
@@ -18,11 +18,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = Field(default="INFO")
     LOG_FORMAT: str = Field(default="json") # json or text
     
-    # Auth Settings
-    # Mandatory change for enterprise
-    SECRET_KEY: SecretStr = Field(default="super-secret-key-change-it")
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    # Auth / Security settings (Locked layer removed)
     ALLOWED_ORIGINS: List[str] = Field(default=["*"])
     
     # Infrastructure
@@ -55,7 +51,6 @@ class Settings(BaseSettings):
     TASK_STORE_PATH: str = "tasks.json"
     AUDIT_LOG_PATH: str = "audit.log"
 
-    from pydantic_settings import SettingsConfigDict
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore"

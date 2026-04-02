@@ -1,5 +1,5 @@
 from src.modules import (
-    sitemap, canonical, robots, meta, internal_links,
+    sitemap, robots, meta, internal_links,
     crawl_budget, schema, image_seo, core_web_vitals, keyword_gap,
     page_speed, heading_structure, open_graph, canonical_advanced,
     broken_links, content_quality, mobile_seo, page_experience,
@@ -9,7 +9,7 @@ from src.modules import (
 MODULE_REGISTRY = {
     # Original modules
     "sitemap":                    sitemap,
-    "canonical":                  canonical,
+    "canonical":                  canonical_advanced,
     "robots":                     robots,
     "meta":                       meta,
     "internal_links":             internal_links,
