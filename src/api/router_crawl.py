@@ -54,9 +54,7 @@ def run_analysis_task(task_id: str, domain: str, limit: int, use_js: bool, fix_c
 
         pages.sort(key=lambda x: x.get("url", ""))
         
-        base_path = urlparse(domain).path
-        if base_path and base_path != "/":
-            pages = [p for p in pages if urlparse(p.get("url", "")).path.startswith(base_path) or urlparse(p.get("url", "")).path == base_path]
+        # RELAXED: Removed strict path filtering to allow all discovered domain pages.
             
         clean_urls = build_clean_urls(pages, fix_canonical)
         

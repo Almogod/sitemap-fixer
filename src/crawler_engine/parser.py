@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
 from lxml import html as lxml_html
 from urllib.parse import urljoin, urlparse
+import re
+from src.utils.logger import logger
 
 
 def extract_links(html, base_url, custom_selectors=None):

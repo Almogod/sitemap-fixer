@@ -1129,6 +1129,15 @@
                 
                 data[key] = value;
             });
+
+            // ENSURE CHECKBOXES ARE INCLUDED (even if false)
+            form.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                if (!cb.checked) {
+                    data[cb.name] = false;
+                } else {
+                    data[cb.name] = true;
+                }
+            });
             
             if (statusDisplay) statusDisplay.innerText = 'Connecting to UrlForge...';
             let lastStatus = "";
@@ -1204,6 +1213,7 @@
         });
     }
 
+    handleFormSubmit('generate-form', '/generate');
     handleFormSubmit('plugin-form', '/plugin/run');
 
     function toggleAll(master) {

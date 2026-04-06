@@ -77,6 +77,7 @@ async def run_workers(frontier, parser, graph, start_url=None, limit=200, concur
                 try:
                     # Robots check
                     if rp and not rp.can_fetch("*", url):
+                        logger.warning(f"Skipping {url} (Blocked by robots.txt)")
                         continue
 
                     async with semaphore:

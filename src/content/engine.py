@@ -56,55 +56,69 @@ def run_content_engine(site_pages, competitor_urls, llm_config, limit=3, domain=
         "recommendations": [{"keyword": kw, "source": url} for url, kws in gaps.items() for kw in kws[:3]]
     }
 
+def is_noise(word: str) -> bool:
+    """Returns True if the word looks like random gibberish or noise."""
+    if len(word) < 5: return True
+    if not any(v in word for v in "aeiouy"): return True # No vowels
+    # Basic entropy check: low vowel ratio (less than 15%)
+    vowels = sum(1 for c in word if c in "aeiouy")
+    if vowels / len(word) < 0.15: return True
+    # Too many repeated characters (e.g., "aaaaa")
+    if any(word.count(c) > len(word) / 2 for c in set(word)): return True
+    return False
+
 def _extract_bulk_keywords(pages) -> Counter:
-    """TF-IDF adjacent weighted keyword extraction with Deep Scrape."""
+    """TF-IDF adjacent weighted keyword extraction with Noise Filter."""
     counts = Counter()
     total_pages = len(pages)
     if total_pages == 0: return counts
     
-    # Document frequency
+    processed_pages = []
     df = Counter()
     for p in pages:
-        # DEEP SCRAPE: Search body text, not just meta
         html = p.get("html", "")
         body_text = ""
         if html:
             soup = BeautifulSoup(html, "lxml")
-            for s in soup(["script", "style", "nav", "footer"]): s.decompose()
-            body_text = soup.get_text(" ", strip=True)[:1000] # Focus on the top-half
+            # Decompose common noise containers
+            for s in soup(["script", "style", "nav", "footer", "header", "aside", "noscript", "svg", "form"]): 
+                s.decompose()
+            body_text = soup.get_text(" ", strip=True)[:3000]
             
-        text = f"{p.get('title', '')} {p.get('meta_description', '')} {body_text}".lower()
-        # Lowered to 3 chars to capture industry codes (QCE, CNC, SEO, etc.)
-        unique_words = set(re.findall(r'\b[a-z]{3,}\b', text))
+        title = p.get('title', '')
+        meta_desc = p.get('meta_description', '')
+        combined_text = f"{title} {meta_desc} {body_text}".lower()
+        # Find all alpha strings
+        raw_words = re.findall(r'\b[a-z]{4,}\b', combined_text)
+        words = [w for w in raw_words if w not in STOPWORDS and not is_noise(w)]
+        
+        unique_words = set(words)
         for w in unique_words:
-            if w not in STOPWORDS: df[w] += 1
+            df[w] += 1
+            
+        processed_pages.append({
+            "words": words,
+            "title_lower": title.lower()
+        })
             
     # Term frequency * IDF
-    for p in pages:
-        html = p.get("html", "")
-        body_text = ""
-        if html:
-            soup = BeautifulSoup(html, "lxml")
-            for s in soup(["script", "style", "nav", "footer"]): s.decompose()
-            body_text = soup.get_text(" ", strip=True)[:1500]
-            
-        text = f"{p.get('title', '')} {p.get('meta_description', '')} {body_text}".lower()
-        words = re.findall(r'\b[a-z]{3,}\b', text)
+    for p in processed_pages:
+        words = p["words"]
+        title_lower = p["title_lower"]
         for w in words:
-            if w in STOPWORDS: continue
             idf = math.log(total_pages / (1 + df[w]))
             # Weight Title words higher
-            weight = 2.5 if w in p.get('title', '').lower() else 1.0
+            weight = 3.0 if w in title_lower else 1.0
             counts[w] += (weight * idf)
             
     return counts
 
 def _extract_bulk_bigrams(pages) -> Counter:
-    """High-signal phrase extraction."""
+    """High-signal phrase extraction with Noise Filter."""
     bigrams = Counter()
     for p in pages:
         text = f"{p.get('title', '')} {p.get('meta_description', '')}".lower()
-        words = [w for w in re.findall(r'\b[a-z]{3,}\b', text) if w not in STOPWORDS]
+        words = [w for w in re.findall(r'\b[a-z]{4,}\b', text) if w not in STOPWORDS and not is_noise(w)]
         for i in range(len(words) - 1):
             bigrams[f"{words[i]} {words[i+1]}"] += 1
     return bigrams

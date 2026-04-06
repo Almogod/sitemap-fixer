@@ -54,14 +54,12 @@ class URLFrontier:
         
         url = ensure_scheme(url)
         
-        # Domain locking: only add if same domain (unless force_add is true for external validation)
         if self.base_domain and not force_add:
             parsed = urlparse(url)
-            # FIX: Use shared 'www-agnostic' check
+            # RELAXED: Only lock domain, not path, unless path-specific crawling is requested.
             if parsed.netloc and not is_internal_domain(parsed.netloc, self.base_domain):
                 return
-            if self.base_path and not parsed.path.startswith(self.base_path) and parsed.path != self.base_path:
-                return
+            # Path locking disabled by default to allow discovering the whole site.
 
         if url not in self.visited:
             self.counter += 1
@@ -133,9 +131,7 @@ class SQLiteURLFrontier:
             # FIX: Use shared 'www-agnostic' check
             if parsed.netloc and not is_internal_domain(parsed.netloc, self.base_domain):
                 return
-            
-            if self.base_path and not parsed.path.startswith(self.base_path) and parsed.path != self.base_path:
-                return
+            # Path locking disabled by default
 
         conn = self._get_conn()
         try:
