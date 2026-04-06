@@ -38,7 +38,6 @@
         <div class="tabs-header">
             <button class="tab-btn active" onclick="switchTab('standard-tab')">Standard Analysis</button>
             <button class="tab-btn" onclick="switchTab('plugin-tab')">Autonomous Plugin</button>
-            <button class="tab-btn" onclick="switchTab('content-tab')">AI Content Creator</button>
         </div>
 
         <!-- TAB 1: STANDARD -->
@@ -227,53 +226,6 @@
             </form>
         </div>
 
-        <!-- TAB 3: STANDALONE CONTENT GENERATOR -->
-        <div id="content-tab" class="tab-content">
-            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
-                Input a keyword and domain to generate a high-quality, SEO-optimized page immediately.
-            </p>
-            <form id="standalone-content-form" action="/plugin/content_only" method="post">
-                <div class="form-group">
-                    <label>Target Domain</label>
-                    <input type="text" name="domain" placeholder="https://mysite.com" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>Target Keyword</label>
-                    <input type="text" name="keyword" placeholder="e.g. best coding assistant" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Competitors (Optional, comma separated)</label>
-                    <input type="text" name="competitors" placeholder="competitor1.com, competitor2.com">
-                </div>
-
-                <div class="ai-world-section" style="border-top: 1px solid var(--card-border); margin-top: 20px; padding-top: 20px;">
-                    <div id="ai-discovery-card-content" class="ai-discovery-card" onclick="revealAIFormsContent()">
-                        <h3 class="ai-world-title" style="font-size: 1.2rem;">AI Engine Config ✨</h3>
-                        <div class="ai-orbit-system">
-                            <div class="orbit-ring" style="width: 140px; height: 140px; animation-duration: 8s;"></div>
-                            <div class="ai-core"><div class="ai-eyes"><span></span><span></span></div></div>
-                        </div>
-                        <div class="ai-click-me">Configure LLM ↓</div>
-                    </div>
-
-                    <div id="ai-config-forms-content" class="ai-config-forms hidden">
-                        <div class="form-group">
-                            <label>OpenAI API Key (Optional)</label>
-                            <input type="password" name="openai_key" placeholder="sk-...">
-                        </div>
-                        <div class="form-group">
-                            <label>Gemini API Key (Optional)</label>
-                            <input type="password" name="gemini_key" placeholder="AIza...">
-                        </div>
-                        <button type="button" class="back-to-world" onclick="hideAIFormsContent(event)">← Back</button>
-                    </div>
-                </div>
-
-                <button type="submit" class="submit-btn" id="content-submit-btn">Generate SEO Page</button>
-            </form>
-        </div>
 
         <!-- LOADING UI INLINE -->
         <div id="loading-overlay" class="hidden" style="margin-top: 30px; border-top: 1px solid var(--card-border); padding-top: 25px;">
@@ -1097,16 +1049,6 @@
         document.getElementById('ai-config-forms').classList.remove('hidden');
     }
 
-    function hideAIFormsContent(event) {
-        if (event) event.stopPropagation();
-        document.getElementById('ai-discovery-card-content').classList.remove('hidden');
-        document.getElementById('ai-config-forms-content').classList.add('hidden');
-    }
-
-    function revealAIFormsContent() {
-        document.getElementById('ai-discovery-card-content').classList.add('hidden');
-        document.getElementById('ai-config-forms-content').classList.remove('hidden');
-    }
 
     const navBtn = document.querySelector('.nav-btn');
     if (navBtn) {
@@ -1262,9 +1204,7 @@
         });
     }
 
-    handleFormSubmit('generate-form', '/generate');
     handleFormSubmit('plugin-form', '/plugin/run');
-    handleFormSubmit('standalone-content-form', '/plugin/content_only');
 
     function toggleAll(master) {
         document.querySelectorAll('.action-check').forEach(c => c.checked = master.checked);
