@@ -105,20 +105,22 @@ def run(context):
             for pi in page_issues:
                 issues.append({"url": url, **pi})
             
-            # Suggestion: Replace all tags with a consistent set
-            if len(locale_map) >= 2:
-                base_set = []
-                for loc, urls in locale_map.items():
-                    base_set.append(f'<link rel="alternate" hreflang="{loc}" href="{urls[0]}">')
-                # Add x-default (usually English or first one)
+        # Suggestion: Replace all tags with a consistent set
+        if len(locale_map) >= 2:
+            base_set = []
+            for loc, urls in locale_map.items():
+                base_set.append(f'<link rel="alternate" hreflang="{loc}" href="{urls[0]}">')
+            
+            # Ensure x-default is present (standard requirement in architecture)
+            if not any(h["hreflang"] == "x-default" for h in hreflangs):
                 default_url = locale_map.get("en", list(locale_map.values())[0])[0]
                 base_set.append(f'<link rel="alternate" hreflang="x-default" href="{default_url}">')
-                
-                suggestions[url] = [{
-                    "type": "hreflang_fix",
-                    "action": "replace_hreflang_tags",
-                    "tags": base_set
-                }]
+
+            suggestions[url] = [{
+                "type": "hreflang_fix",
+                "action": "fix_hreflang",
+                "tags": base_set
+            }]
 
     return {
         "issues": issues,

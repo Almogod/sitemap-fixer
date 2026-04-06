@@ -11,24 +11,16 @@ from src.utils.logger import logger
 
 async def run_workers(frontier, parser, graph, start_url=None, limit=200, concurrency=10, delay=1.0, check_robots=True, extra_headers=None, broken_links_only=False, max_depth=10, crawl_assets=False, custom_selectors=None):
     results = []
-    broken_links = []
     rp = None
-    
-    # Normalizing start_url for comparison
-    from .frontier import ensure_scheme
+    from .frontier import ensure_scheme, is_internal_domain
     comp_url = ensure_scheme(start_url)
     
-    # 1. Asynchronous robots.txt handling
     if check_robots:
         try:
-            # We try to get the base domain from the first available URL
             first_url = None
-            if hasattr(frontier, 'peek'):
-                first_url = frontier.peek()
-            
+            if hasattr(frontier, 'peek'): first_url = frontier.peek()
             if not first_url and hasattr(frontier, 'visited') and frontier.visited:
                 first_url = next(iter(frontier.visited))
-
             if first_url:
                 parsed = urlparse(first_url)
                 robots_url = f"{parsed.scheme}://{parsed.netloc}/robots.txt"
@@ -37,11 +29,9 @@ async def run_workers(frontier, parser, graph, start_url=None, limit=200, concur
                     if resp.status_code == 200:
                         rp = RobotFileParser()
                         rp.parse(resp.text.splitlines())
-                        logger.info(f"Loaded robots.txt from {robots_url}")
         except Exception as e:
             logger.warning(f"Could not fetch robots.txt: {e}")
 
-    # 2. Client configuration (Proxy & Auth)
     mounts = {}
     if config.CRAWLER_PROXY:
         mounts = {"all://": httpx.AsyncHTTPTransport(proxy=config.CRAWLER_PROXY)}
@@ -52,20 +42,13 @@ async def run_workers(frontier, parser, graph, start_url=None, limit=200, concur
     elif config.CRAWLER_BASIC_AUTH:
         encoded = base64.b64encode(config.CRAWLER_BASIC_AUTH.encode()).decode()
         headers["Authorization"] = f"Basic {encoded}"
-    
-    if extra_headers:
-        headers.update(extra_headers)
+    if extra_headers: headers.update(extra_headers)
 
-    async with httpx.AsyncClient(
-        timeout=config.CRAWL_TIMEOUT, 
-        headers=headers,
-        mounts=mounts,
-        follow_redirects=True
-    ) as client:
-
+    async with httpx.AsyncClient(timeout=config.CRAWL_TIMEOUT, headers=headers, mounts=mounts, follow_redirects=True) as client:
         semaphore = asyncio.Semaphore(concurrency)
         cv = asyncio.Condition()
         active_workers = 0
+
 
         async def worker():
             nonlocal active_workers
@@ -81,102 +64,67 @@ async def run_workers(frontier, parser, graph, start_url=None, limit=200, concur
                     if len(results) >= limit:
                         cv.notify_all()
                         return
-                        
+                    
                     item = frontier.get()
                     if item:
                         active_workers += 1
 
-                if not item:
-                    continue
+                if not item: continue
 
                 url = item["url"]
                 depth = item["depth"]
 
                 try:
-                    # Robots.txt check
+                    # Robots check
                     if rp and not rp.can_fetch("*", url):
-                        logger.debug(f"Skipping {url} due to robots.txt")
-                        async with cv:
-                            active_workers -= 1
-                            cv.notify_all()
                         continue
 
                     async with semaphore:
-                        if delay > 0:
-                            await asyncio.sleep(delay)
-                        
-                        logger.info(f"Worker fetching: {url} (Depth: {depth})")
+                        if delay > 0: await asyncio.sleep(delay)
                         page = await fetch(client, url)
 
-                    if not page:
-                        logger.warning(f"Worker failed to fetch: {url}")
-                        async with cv:
-                            active_workers -= 1
-                            cv.notify_all()
-                        continue
-
-                    status = page.get("status")
+                    if not page: continue
                     
-                    # Check if it's an external link
-                    is_external = False
+                    status = page.get("status")
                     parsed_u = urlparse(url)
-                    if frontier.base_domain and parsed_u.netloc and parsed_u.netloc != frontier.base_domain:
-                        is_external = True
+                    # FIX: Use shared 'www-agnostic' check here to prevent skipping metadata on internal redirects
+                    is_external = frontier.base_domain and parsed_u.netloc and not is_internal_domain(parsed_u.netloc, frontier.base_domain)
 
-                    # Initialize default metadata to prevent KeyError in analysis modules
-                    page["meta"] = {}
-                    page["headings"] = {}
-                    page["images"] = []
-                    page["videos"] = []
-                    page["hreflangs"] = []
-                    page["custom"] = {}
-                    page["canonical"] = ""
+                    # Metadata init
+                    page.update({"meta": {}, "headings": {}, "images": [], "videos": [], "hreflangs": [], "custom": {}, "canonical": ""})
 
-                    # If in broken links mode, we mainly care about Non-200s (Treat 304 as healthy)
                     if broken_links_only:
-                        # Always include the start URL for baseline context, otherwise just non-200s
                         if (url == comp_url) or (status and status not in [200, 304]):
                             results.append(page)
-                            if status and status not in [200, 304]:
-                                logger.info(f"Worker found broken link: {url} (Status: {status})")
                     else:
                         results.append(page)
-                        status_msg = "Valid (Cached)" if status == 304 else f"Status: {status}"
-                        logger.info(f"Worker fetched {url} ({status_msg}). Progress: {len(results)}/{limit}")
+                        logger.info(f"Fetched {url} ({status}). Progress: {len(results)}/{limit}")
 
-                    # Only parse if it's 200, not external, and within depth (304 has no body, so we can't parse it)
+                    # FIX: Metadata collection and link extraction must work for internal pages
                     if status == 200 and page.get("html") and not is_external and depth < max_depth:
                         extracted = parser(page["html"], page["url"], custom_selectors=custom_selectors)
-                        
-                        page["hreflangs"] = extracted.get("hreflangs", [])
-                        page["images"] = extracted.get("images", [])
-                        page["videos"] = extracted.get("videos", [])
-                        page["canonical"] = extracted.get("canonical", "")
-                        page["meta"] = extracted.get("meta", {})
-                        page["headings"] = extracted.get("headings", {})
-                        page["custom"] = extracted.get("custom", {})
+                        page.update({
+                            "hreflangs": extracted.get("hreflangs", []), "images": extracted.get("images", []),
+                            "videos": extracted.get("videos", []), "canonical": extracted.get("canonical", ""),
+                            "meta": extracted.get("meta", {}), "headings": extracted.get("headings", {}),
+                            "custom": extracted.get("custom", {})
+                        })
 
                         for link in extracted.get("links", []):
                             graph.add_edge(page["url"], link)
-                            
-                            is_target_external = False
                             parsed_link = urlparse(link)
-                            if frontier.base_domain and parsed_link.netloc and parsed_link.netloc != frontier.base_domain:
-                                is_target_external = True
-                                
-                            # External links get max_depth+1 so they are fetched but never parsed
-                            target_depth = max_depth + 1 if is_target_external else depth + 1
-                            
-                            # PRIORITIES: HTML (10), External (1)
-                            priority = 1 if is_target_external else 10
-                            frontier.add(link, depth=target_depth, force_add=is_target_external, priority=priority)
+                            # FIX: Use shared 'www-agnostic' check for outgoing links too
+                            is_target_ext = frontier.base_domain and parsed_link.netloc and not is_internal_domain(parsed_link.netloc, frontier.base_domain)
+                            target_depth = max_depth + 1 if is_target_ext else depth + 1
+                            priority = 1 if is_target_ext else 10
+                            frontier.add(link, depth=target_depth, force_add=is_target_ext, priority=priority)
                             
                         if crawl_assets:
                             for asset in extracted.get("assets", []):
                                 graph.add_edge(page["url"], asset)
-                                # Assets: Priority 5
                                 frontier.add(asset, depth=max_depth + 1, force_add=True, priority=5)
-
+                except Exception as e:
+                    logger.error(f"Worker Error: {e}")
                 finally:
                     async with cv:
                         active_workers -= 1

@@ -55,15 +55,30 @@ def extract_links(html, base_url, custom_selectors=None):
             "caption": img.get("title", "")
         })
         
-    # 6. SEO Meta Audit
-    meta_title = soup.title.string.strip() if soup.title else ""
+    # 6. SEO Meta Audit (with OpenGraph Fallbacks)
+    meta_title = soup.title.get_text().strip() if soup.title else ""
+    
+    # Try og:title if title is empty
+    if not meta_title:
+        og_title = soup.find("meta", property="og:title") or soup.find("meta", attrs={"name": "og:title"})
+        if og_title:
+            meta_title = og_title.get("content", "").strip()
+    
+    # Final title fallback: First H1
+    if not meta_title:
+        h1 = soup.find("h1")
+        if h1:
+            meta_title = h1.get_text().strip()
+
     meta_desc = ""
-    desc_tag = soup.find("meta", attrs={"name": "description"})
+    # Case-insensitive search for description
+    desc_tag = soup.find("meta", attrs={"name": re.compile(r'^description$', re.I)}) or \
+               soup.find("meta", property="og:description")
     if desc_tag:
         meta_desc = desc_tag.get("content", "").strip()
         
     meta_robots = ""
-    robots_tag = soup.find("meta", attrs={"name": "robots"})
+    robots_tag = soup.find("meta", attrs={"name": re.compile(r'^robots$', re.I)})
     if robots_tag:
         meta_robots = robots_tag.get("content", "").strip()
         

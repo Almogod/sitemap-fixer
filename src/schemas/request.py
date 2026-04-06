@@ -7,6 +7,8 @@ class BaseCrawlRequest(BaseModel):
     crawl_assets: bool = False
     crawler_backend: str = Field("memory", pattern="^(memory|sqlite)$")
     concurrency: int = Field(10, ge=1, le=100)
+    use_js: bool = False
+    delay: float = Field(1.0, ge=0.1, le=30.0)
     custom_selectors: Optional[Dict[str, str]] = None
     broken_links_only: bool = False
     task_id: Optional[str] = None
@@ -83,3 +85,7 @@ class FAQUpdateRequest(BaseModel):
     faq_index: int
     question: str
     answer: str
+
+class ProfileUpdateRequest(BaseModel):
+    task_id: str
+    markdown_content: str

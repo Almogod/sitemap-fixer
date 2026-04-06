@@ -7,6 +7,11 @@ from .graph import CrawlGraph
 from src.utils.logger import logger
 
 def crawl(start_url, limit=200, extra_headers=None, max_depth=10, crawl_assets=False, backend="memory", concurrency=10, custom_selectors=None, broken_links_only=False):
+    # Scaling logic: Auto-switch to SQLite for large crawls to prevent memory pressure
+    if limit > 500 and backend == "memory":
+        logger.info(f"Scaling detected (Limit: {limit}). Auto-switching to SQLite Enterprise Frontier...")
+        backend = "sqlite"
+
     if backend == "sqlite":
         logger.info("Initializing SQLite Enterprise Frontier...")
         frontier = SQLiteURLFrontier(base_domain=start_url)

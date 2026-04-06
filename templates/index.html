@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UrlForge | Autonomous SEO Engine</title>
     <link rel="stylesheet" href="/static/modern_forge.css?v={{ timestamp | default('4') }}">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
     <canvas id="bg-canvas"></canvas>
@@ -166,6 +167,16 @@
                     <div class="checkbox-group">
                         <input type="checkbox" id="plugin_crawl_assets" name="crawl_assets" value="true">
                         <label for="plugin_crawl_assets">Enable Deep Asset Crawl (CSS, JS, Images, PDFs)</label>
+                    </div>
+
+                    <div class="checkbox-group" style="margin-top: 10px;">
+                        <input type="checkbox" id="plugin_use_js" name="use_js" value="true">
+                        <label for="plugin_use_js">Enable JS Rendering (Playwright)</label>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label>Crawl Delay (Seconds)</label>
+                        <input type="number" name="delay" value="1.0" min="0.1" max="10" step="0.1" style="width:100%; padding:14px; border-radius:12px; border:1px solid var(--card-border); background:rgba(255,255,255,0.3);">
                     </div>
                 </div>
 
@@ -416,6 +427,24 @@
             </div>
         </div>
 
+        <!-- NEW: SITE PROFILE SECTION -->
+        <div class="review-section" style="margin-top: 20px; border-top: 1px solid var(--card-border); padding-top: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                <h3 style="font-weight: 600;">Site Profile & Brand Mission</h3>
+                <button onclick="openProfileEditor()" class="btn-sm" style="background: rgba(255,255,255,0.1); border: 1px solid var(--card-border); color: #fff; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.8rem;">Edit Profile</button>
+            </div>
+            <div id="profile-display-area" class="glass-card" style="padding: 20px; background: rgba(255,255,255,0.02); border: 1px solid var(--card-border); border-radius: 12px; font-size: 0.9rem; line-height: 1.6; max-height: 300px; overflow-y: auto;">
+                {% if plugin_report.site_profile_md %}
+                    <div class="markdown-body">
+                        {{ plugin_report.site_profile_md | safe }}
+                    </div>
+                {% else %}
+                    <p style="color: var(--text-muted); font-style: italic;">No detailed site profile generated yet.</p>
+                {% endif %}
+            </div>
+            <input type="hidden" id="raw-profile-md" value="{{ plugin_report.site_profile_md or '' }}">
+        </div>
+
         <!-- CONTENT ENGINE SECTION (ALWAYS VISIBLE IN PLUGIN MODE) -->
         <div class="review-section" style="margin-top: 20px; border-top: 1px solid var(--card-border); padding-top: 20px;">
             <h3 style="margin-bottom: 15px; font-weight: 600;">Content Engine: Keyword Strategy</h3>
@@ -490,7 +519,7 @@
                 <div class="faq-item-card" data-index="{{ loop.index0 }}" data-question="{{ faq.question|e }}" data-answer="{{ faq.answer|e }}" style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 15px; position: relative; margin-bottom: 12px;">
                     <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 8px;">
                         <button onclick="openFAQEditor(this)" class="btn-sm" style="background: rgba(255,255,255,0.1); border: none; color: #fff; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">Edit</button>
-                        <button onclick="deleteFAQ({{ loop.index0 }})" class="btn-sm" style="background: rgba(239, 68, 68, 0.1); border: none; color: #ef4444; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">Delete</button>
+                        <button onclick="deleteFAQ(this)" class="btn-sm" style="background: rgba(239, 68, 68, 0.1); border: none; color: #ef4444; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">Delete</button>
                     </div>
                     <p style="font-weight: 700; color: #fff; margin-bottom: 8px; font-size: 0.95rem; padding-right: 80px;">Q: {{ faq.question }}</p>
                     <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">{{ faq.answer }}</p>
@@ -1491,7 +1520,9 @@
         }
     }
 
-    async function deleteFAQ(index) {
+    async function deleteFAQ(btn) {
+        const card = btn.closest('.faq-item-card');
+        const index = card.getAttribute('data-index');
         if (!confirm("Are you sure you want to remove this FAQ?")) return;
         const taskId = new URLSearchParams(window.location.search).get('task_id');
         try {
@@ -1507,7 +1538,53 @@
             alert("Error deleting FAQ: " + err.message);
         }
     }
+
+    // Site Profile Editor Functions
+    function openProfileEditor() {
+        const rawMd = document.getElementById('raw-profile-md').value;
+        document.getElementById('profile-editor-textarea').value = rawMd;
+        document.getElementById('profile-editor-modal').classList.remove('hidden');
+    }
+
+    function closeProfileEditor() {
+        document.getElementById('profile-editor-modal').classList.add('hidden');
+    }
+
+    async function saveSiteProfile() {
+        const updatedMd = document.getElementById('profile-editor-textarea').value;
+        const taskId = new URLSearchParams(window.location.search).get('task_id');
+        const saveBtn = document.getElementById('profile-save-btn');
+        
+        saveBtn.innerText = 'Saving...';
+        saveBtn.disabled = true;
+
+        try {
+            const res = await fetch('/plugin/update_profile', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    task_id: taskId,
+                    markdown_content: updatedMd
+                })
+            });
+            if (res.ok) {
+                // Update hidden input so if they reopen it is updated
+                document.getElementById('raw-profile-md').value = updatedMd;
+                // Ideally rerender markdown-body, but for now reload is safest
+                location.reload();
+            } else {
+                alert("Failed to save Site Profile");
+            }
+        } catch (err) {
+            alert("Error saving Profile: " + err.message);
+        } finally {
+            saveBtn.innerText = 'Save Site Profile';
+            saveBtn.disabled = false;
+        }
+    }
 </script>
+
+</div>
 
 <!-- FAQ Editor Modal -->
 <div id="faq-editor-modal" class="modal-overlay hidden">
@@ -1524,7 +1601,24 @@
         </div>
         <div style="display: flex; gap: 10px; margin-top: 30px; justify-content: flex-end;">
             <button onclick="closeFAQEditor()" class="btn-sm" style="background:transparent; border:1px solid var(--card-border); color:var(--text-muted); padding: 10px 20px; border-radius: 8px; cursor: pointer;">Cancel</button>
-            <button onclick="saveFAQ()" id="faq-save-btn" class="submit-btn" style="width:auto; margin-top:0; padding:12px 30px; background: var(--primary); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Save Changes</button>
+            <button onclick="saveFAQ()" id="faq-save-btn" class="submit-btn" style="width:auto; margin-top:0; padding:12px 30px; background: var(--primary-color); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<!-- Site Profile Editor Modal -->
+<div id="profile-editor-modal" class="modal-overlay hidden">
+    <div class="modal-content glass-card" style="max-width: 800px; padding: 30px; margin: 50px auto; position: relative;">
+        <h2 class="section-title">Edit Site Profile (Markdown)</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">
+            This profile is used as context for all AI generation. Refine the niche, services, and mission to improve results.
+        </p>
+        <div class="form-group">
+            <textarea id="profile-editor-textarea" style="width:100%; height:400px; padding:15px; border-radius:12px; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); color: #fff; font-family: 'Fira Code', monospace; font-size: 0.9rem; line-height: 1.5; resize: vertical;"></textarea>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 30px; justify-content: flex-end;">
+            <button onclick="closeProfileEditor()" class="btn-sm" style="background:transparent; border:1px solid var(--card-border); color:var(--text-muted); padding: 10px 20px; border-radius: 8px; cursor: pointer;">Cancel</button>
+            <button onclick="saveSiteProfile()" id="profile-save-btn" class="submit-btn" style="width:auto; margin-top:0; padding:12px 30px; background: var(--primary-color); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Save Site Profile</button>
         </div>
     </div>
 </div>
@@ -1537,5 +1631,21 @@
     </div>
     
     <script src="/static/brain_engine.js?v={{ timestamp | default('4') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const renderMD = () => {
+                document.querySelectorAll('.markdown-body').forEach(body => {
+                    const raw = body.innerText.trim();
+                    if (raw && (raw.includes('#') || raw.includes('**') || raw.includes('---'))) {
+                        body.innerHTML = marked.parse(raw);
+                    }
+                });
+            };
+            renderMD();
+            window.rerenderMarkdown = renderMD;
+            // Immediate re-check to catch late-load content
+            setTimeout(renderMD, 500);
+        });
+    </script>
 </body>
 </html>

@@ -63,6 +63,8 @@ async def run_plugin_task(
             "crawl_assets": data.crawl_assets, 
             "backend": data.crawler_backend,
             "concurrency": data.concurrency,
+            "use_js": data.use_js,
+            "delay": data.delay,
             "custom_selectors": data.custom_selectors,
             "broken_links_only": data.broken_links_only
         },
@@ -216,25 +218,6 @@ async def generate_keyword_content(
     
     return JSONResponse(content={"status": "generation_started", "task_id": data.task_id})
 
-async def _run_and_save_keyword_content(task_id, keyword, competitors, llm_config):
-    from src.content.engine import generate_content_for_keyword
-    try:
-        report = task_store.get_results(task_id) or {}
-        pages = report.get("existing_pages_list", [])
-        
-        result = generate_content_for_keyword(keyword, competitors, llm_config, existing_pages=pages)
-        
-        if "error" not in result:
-            if "pages_generated" not in report:
-                report["pages_generated"] = []
-            
-            result["keyword"] = keyword
-            report["pages_generated"].append(result)
-            task_store.save_results(task_id, report)
-            task_store.set_status(task_id, f"Generated content for {keyword}")
-    except Exception as e:
-        logger.error(f"Background generation failed: {e}")
-
 @router.post("/update_content")
 async def update_content(
     data: ContentUpdateRequest
@@ -294,3 +277,49 @@ async def delete_plugin_faq(task_id: str, faq_index: int):
         return {"status": "success"}
     else:
         raise HTTPException(status_code=400, detail="Invalid FAQ index")
+async def _run_and_save_keyword_content(task_id, keyword, competitors, llm_config):
+    """Background task to generate content and update the report."""
+    from src.content.engine import generate_content_for_keyword
+    
+    try:
+        report = task_store.get_results(task_id)
+        if not report:
+            logger.error(f"Task {task_id} not found in store for background generation.")
+            return
+
+        domain_context = report.get("domain_context", {})
+        existing_pages = report.get("existing_pages_list", [])
+        site_wide_faqs = report.get("site_faqs", [])
+
+        result = generate_content_for_keyword(
+            keyword=keyword,
+            competitor_urls=competitors,
+            llm_config=llm_config,
+            existing_pages=existing_pages,
+            domain_context=domain_context,
+            site_wide_faqs=site_wide_faqs
+        )
+
+        if "error" not in result:
+            result["keyword"] = keyword
+            if "pages_generated" not in report:
+                report["pages_generated"] = []
+            
+            # Check if keyword already exists, if so update it
+            found = False
+            for idx, p in enumerate(report["pages_generated"]):
+                if p.get("keyword") == keyword:
+                    report["pages_generated"][idx] = result
+                    found = True
+                    break
+            
+            if not found:
+                report["pages_generated"].append(result)
+                
+            task_store.save_results(task_id, report)
+            logger.info(f"Successfully generated and saved content for '{keyword}' in task {task_id}")
+        else:
+            logger.error(f"Background generation failed for '{keyword}': {result['error']}")
+            
+    except Exception as e:
+        logger.error(f"Critical error in background content generation: {e}", exc_info=True)

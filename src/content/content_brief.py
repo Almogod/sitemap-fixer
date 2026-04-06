@@ -70,6 +70,9 @@ class ContentBrief:
     audience_type: str = "General Audience"
     pain_points: List[str] = field(default_factory=list)
     monetary_aspects: List[str] = field(default_factory=list)
+    site_profile_md: str = ""
+    tone_markers: List[str] = field(default_factory=list)
+    services: List[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -97,4 +100,5 @@ class ContentBrief:
             "audience_type": self.audience_type,
             "pain_points": self.pain_points,
             "monetary_aspects": self.monetary_aspects,
+            "site_profile_md": self.site_profile_md
         }

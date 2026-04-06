@@ -41,28 +41,11 @@ def run(context):
         # ─────────────────────────────────────
         if heading_levels.count(1) > 1:
             issues.append({"url": url, "issue": "multiple_h1", "count": heading_levels.count(1)})
+            # We demote all but the first one
             page_suggestions.append({
                 "type": "fix_multiple_h1",
                 "action": "demote_extra_h1_to_h2"
             })
-
-        # ─────────────────────────────────────
-        # Skipped heading levels (e.g. H1 → H3)
-        # ─────────────────────────────────────
-        for i in range(1, len(heading_levels)):
-            prev = heading_levels[i - 1]
-            curr = heading_levels[i]
-            if curr > prev + 1:
-                issues.append({
-                    "url": url,
-                    "issue": "skipped_heading_level",
-                    "from": f"h{prev}",
-                    "to": f"h{curr}"
-                })
-                page_suggestions.append({
-                    "type": "fix_heading_skip",
-                    "action": f"change h{curr} to h{prev + 1}"
-                })
 
         # ─────────────────────────────────────
         # No H2 sub-sections (thin structure signal)

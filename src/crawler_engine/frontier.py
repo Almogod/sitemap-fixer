@@ -25,6 +25,13 @@ def ensure_scheme(url: str, default_scheme: str = "https") -> str:
             
     return url
 
+def is_internal_domain(netloc, base_domain):
+    """Returns True if netloc matches base_domain, ignoring 'www.' prefix."""
+    if not netloc or not base_domain: return False
+    def norm(d): return d.lower().replace("www.", "", 1)
+    return norm(netloc) == norm(base_domain)
+
+
 class URLFrontier:
     def __init__(self, base_domain=None):
         self.queue = [] # Heap for priority queue
@@ -50,7 +57,8 @@ class URLFrontier:
         # Domain locking: only add if same domain (unless force_add is true for external validation)
         if self.base_domain and not force_add:
             parsed = urlparse(url)
-            if parsed.netloc and parsed.netloc != self.base_domain:
+            # FIX: Use shared 'www-agnostic' check
+            if parsed.netloc and not is_internal_domain(parsed.netloc, self.base_domain):
                 return
             if self.base_path and not parsed.path.startswith(self.base_path) and parsed.path != self.base_path:
                 return
@@ -110,6 +118,8 @@ class SQLiteURLFrontier:
         if not hasattr(self._local, 'conn'):
             self._local.conn = sqlite3.connect(self.db_path, check_same_thread=False)
             self._local.conn.execute("PRAGMA journal_mode=WAL")
+            self._local.conn.execute("PRAGMA synchronous=NORMAL")
+            self._local.conn.execute("PRAGMA cache_size=-64000") # 64MB cache
         return self._local.conn
 
     def add(self, url, depth=0, force_add=False, priority=0):
@@ -120,30 +130,34 @@ class SQLiteURLFrontier:
         
         if self.base_domain and not force_add:
             parsed = urlparse(url)
-            if parsed.netloc and parsed.netloc != self.base_domain:
+            # FIX: Use shared 'www-agnostic' check
+            if parsed.netloc and not is_internal_domain(parsed.netloc, self.base_domain):
                 return
+            
             if self.base_path and not parsed.path.startswith(self.base_path) and parsed.path != self.base_path:
                 return
 
         conn = self._get_conn()
-        # Check visited
-        res = conn.execute("SELECT 1 FROM visited WHERE url = ?", (url,)).fetchone()
-        if not res:
-            try:
-                conn.execute("INSERT INTO visited (url) VALUES (?)", (url,))
+        try:
+            # Atomic: Only insert if not visited
+            conn.execute("INSERT OR IGNORE INTO visited (url) VALUES (?)", (url,))
+            if conn.total_changes > 0:
                 conn.execute("INSERT INTO queue (url, depth, priority) VALUES (?, ?, ?)", (url, depth, priority))
                 conn.commit()
-            except:
-                pass # Already visited in concurrent race
+        except Exception as e:
+            logger.debug(f"SQLite add conflict for {url}: {e}")
 
     def get(self):
         conn = self._get_conn()
-        res = conn.execute("SELECT id, url, depth FROM queue ORDER BY priority DESC, id ASC LIMIT 1").fetchone()
-        if res:
-            id, url, depth = res
-            conn.execute("DELETE FROM queue WHERE id = ?", (id,))
-            conn.commit()
-            return {"url": url, "depth": depth}
+        try:
+            res = conn.execute("SELECT id, url, depth FROM queue ORDER BY priority DESC, id ASC LIMIT 1").fetchone()
+            if res:
+                id, url, depth = res
+                conn.execute("DELETE FROM queue WHERE id = ?", (id,))
+                conn.commit()
+                return {"url": url, "depth": depth}
+        except Exception as e:
+            logger.error(f"SQLite get error: {e}")
         return None
 
     def size(self):

@@ -25,6 +25,7 @@ def execute_fixes(context, module_results, strategy):
         "hreflang":                 apply_hreflang_fixes,
         "broken_links":             apply_broken_link_fixes,
         "content_quality":          apply_content_quality_fixes,
+        "hardcode_fixer":           apply_hardcode_fixes,
     }
 
     for module_name in strategy:
@@ -127,12 +128,37 @@ def apply_heading_fixes(result):
     actions = []
     for url, page_suggestions in suggestions.items():
         for s in page_suggestions:
-            actions.append({
-                "type": "heading_fix",
-                "url": url,
-                "fix_type": s.get("type"),
-                "action": s.get("action")
-            })
+            if s.get("type") == "fix_multiple_h1":
+                actions.append({
+                    "type": "demote_extra_h1",
+                    "url": url
+                })
+            else:
+                actions.append({
+                    "type": "heading_fix",
+                    "url": url,
+                    "fix_type": s.get("type"),
+                    "action": s.get("action")
+                })
+    return actions
+
+
+# ─────────────────────────────────────
+# HARDCODE FIXER
+# ─────────────────────────────────────
+def apply_hardcode_fixes(result):
+    suggestions = result.get("suggestions", {})
+    actions = []
+    for url, page_suggestions in suggestions.items():
+        for s in page_suggestions:
+            if s.get("type") == "hardcode_fixation":
+                actions.append({
+                    "type": "generic_replace",
+                    "url": url,
+                    "pattern": s.get("regex"),
+                    "replacement": "FIXED_VALUE", # Generic placeholder for now
+                    "is_regex": True
+                })
     return actions
 
 

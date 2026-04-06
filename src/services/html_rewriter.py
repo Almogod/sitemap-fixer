@@ -19,6 +19,7 @@ Handles:
 
 from bs4 import BeautifulSoup, Tag
 import json
+import re
 
 
 def apply_fixes(html: str, actions: list) -> str:
@@ -96,6 +97,28 @@ def apply_fixes(html: str, actions: list) -> str:
                 for img in soup.find_all("img", src=True):
                     if img["src"].startswith("http://"):
                         img["src"] = img["src"].replace("http://", "https://", 1)
+
+            elif action_type == "generic_replace":
+                pattern = action.get("pattern")
+                replacement = action.get("replacement")
+                is_regex = action.get("is_regex", False)
+                if pattern and replacement:
+                    # Note: Full string replacement on soup.decode() is risky but 
+                    # effective for 'hardcode fixations' across the whole site.
+                    # A better way is element-by-element but this is what was requested.
+                    html_str = str(soup)
+                    if is_regex:
+                        html_str = re.sub(pattern, replacement, html_str, flags=re.IGNORECASE)
+                    else:
+                        html_str = html_str.replace(pattern, replacement)
+                    soup = BeautifulSoup(html_str, "lxml")
+
+            elif action_type == "demote_extra_h1":
+                h1s = soup.find_all("h1")
+                if len(h1s) > 1:
+                    # Keep the first one, demote the rest
+                    for h1 in h1s[1:]:
+                        h1.name = "h2"
 
         except Exception as e:
             # Log and continue — never crash on a single fix

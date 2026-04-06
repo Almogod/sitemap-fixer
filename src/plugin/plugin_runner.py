@@ -120,6 +120,9 @@ def run_plugin(
                     progress("Skipping analysis: No pages crawled.")
                     continue
                 
+                # ═══════════════════════════════════════════════════
+                # STEP 1: SEO Audit (standard engine analysis)
+                # ═══════════════════════════════════════════════════
                 results = run_engine(
                     pages=context_data["pages"],
                     clean_urls=context_data["clean_urls"],
@@ -132,8 +135,27 @@ def run_plugin(
                 report["seo_score_before"] = results.get("seo_score", 0)
                 report["engine_result"] = results
                 report["suggested_actions"] = results.get("actions", [])
-                progress(f"Analysis complete. Score: {report['seo_score_before']}")
+                progress(f"SEO Audit complete. Score: {report['seo_score_before']}")
 
+                # ═══════════════════════════════════════════════════
+                # STEP 2: Deep Site Content Analysis
+                # Understand WHAT the site is about, its tone, niche
+                # ═══════════════════════════════════════════════════
+                progress("Analyzing site content, tone, and niche...")
+                from src.content.engine import analyze_site_content, verify_keyword_relevance, generate_markdown_site_profile
+                domain_context = analyze_site_content(context_data["pages"], context_data["domain"], llm_config=llm_config)
+                
+                # NEW: Generate and save the persistent Site Profile Markdown
+                site_profile_md = generate_markdown_site_profile(domain_context)
+                report["site_profile_md"] = site_profile_md
+                report["domain_context"] = domain_context # Keep raw for logic
+                
+                progress(f"Site analysis: niche='{domain_context.get('niche')}', tone='{domain_context.get('tone')}'")
+                progress("Site Profile Markdown generated for context injection.")
+
+                # ═══════════════════════════════════════════════════
+                # STEP 3: Extract & Rank Keywords
+                # ═══════════════════════════════════════════════════
                 from src.content.engine import run_content_engine
                 content_res = run_content_engine(
                     context_data["pages"], 
@@ -143,61 +165,87 @@ def run_plugin(
                 )
                 
                 keyword_gaps = content_res.get("recommendations", [])
-                # Store in report for UI
+                site_keywords = content_res.get("site_keywords", [])
+                prime_keywords = content_res.get("prime_keywords", [])
+                
                 report["keyword_gap"] = content_res.get("keyword_gap", {})
-                report["site_keywords"] = content_res.get("site_keywords", [])
+                report["site_keywords"] = site_keywords
                 
                 existing_pages_list = [{"url": p["url"], "title": _get_title(p)} for p in context_data["pages"]]
-                
-                # Store recommendations for UI to allow user to trigger generation
-                report["content_generation_available"] = bool(keyword_gaps)
+                report["content_generation_available"] = bool(keyword_gaps) or bool(prime_keywords)
                 report["keyword_recommendations"] = keyword_gaps
                 report["existing_pages_list"] = existing_pages_list
+                progress(f"Found {len(site_keywords)} site keywords, {len(prime_keywords)} prime keywords")
 
-                # ── AI FAQ Generation (Sitewide Citations) ────────
-                progress("Generating sitewide AI FAQs for citation...")
+                # ═══════════════════════════════════════════════════
+                # STEP 4: Search Web for Competitor FAQs & Generate
+                # Uses the API to match the site's tone
+                # ═══════════════════════════════════════════════════
+                progress(f"Searching web for competitor FAQs and generating site-specific FAQs...")
                 from src.content.faq_generator import generate_site_faqs
-                site_keywords_for_faq = content_res.get("site_keywords", [])
-                site_faqs = generate_site_faqs(site_keywords_for_faq, context_data["domain"], llm_config)
+                site_faqs = generate_site_faqs(
+                    site_keywords, 
+                    context_data["domain"], 
+                    llm_config, 
+                    site_context=domain_context
+                )
                 report["site_faqs"] = [faq.model_dump() for faq in site_faqs]
-                progress(f"Generated {len(site_faqs)} FAQs for search citation.")
+                progress(f"Generated {len(site_faqs)} site-specific FAQs (API: {llm_config.get('provider', 'builtin')})")
                 
-                # ── Proactive Content Generation (Auto-Pilot) ────────
-                all_keywords_to_gen = []
+                # ═══════════════════════════════════════════════════
+                # STEP 5: Verify Keywords & Auto-Generate Pages
+                # Only generate for keywords VERIFIED to be relevant
+                # ═══════════════════════════════════════════════════
+                candidate_keywords = []
                 if target_keyword:
-                    all_keywords_to_gen.append(target_keyword)
+                    candidate_keywords.append(target_keyword)
                 
-                # Automatically pick top 3 gap keywords for proactive discovery
-                for rec in keyword_gaps[:3]:
-                    if rec["keyword"] not in all_keywords_to_gen:
-                        all_keywords_to_gen.append(rec["keyword"])
+                for rec in keyword_gaps[:5]:
+                    if rec["keyword"] not in candidate_keywords:
+                        candidate_keywords.append(rec["keyword"])
                 
-                # Also pick 2 "prime" existing keywords to strengthen current content
-                prime_kws = content_res.get("prime_keywords", [])
-                for pk in prime_kws[:2]:
-                    if pk not in all_keywords_to_gen:
-                        all_keywords_to_gen.append(pk)
+                for pk in prime_keywords[:5]:
+                    if pk not in candidate_keywords:
+                        candidate_keywords.append(pk)
 
-                for kw in all_keywords_to_gen:
+                # Verify each keyword is relevant to the site content
+                verified_keywords = []
+                for kw in candidate_keywords:
+                    if verify_keyword_relevance(kw, domain_context):
+                        verified_keywords.append(kw)
+                    else:
+                        progress(f"Keyword '{kw}' rejected — not relevant to site content")
+                
+                if not verified_keywords:
+                    progress("No verified keywords for page generation.")
+                else:
+                    progress(f"Verified {len(verified_keywords)} keywords for page generation: {verified_keywords}")
+
+                for kw in verified_keywords[:5]:  # Cap at 5 pages max
                     try:
-                        progress(f"Auto-generating page for: '{kw}'")
+                        progress(f"Generating page for verified keyword: '{kw}' (via {llm_config.get('provider', 'builtin')})")
                         from src.content.engine import generate_content_for_keyword
                         page_result = generate_content_for_keyword(
                             kw, 
                             competitors, 
                             llm_config, 
-                            existing_pages=existing_pages_list
+                            existing_pages=existing_pages_list,
+                            domain_context=domain_context,
+                            site_wide_faqs=report.get("site_faqs", [])
                         )
                         if "error" not in page_result:
                             page_result["keyword"] = kw
                             report["pages_generated"].append(page_result)
-                            progress(f"Generated SEO page for '{kw}'")
+                            method = page_result.get("generation_method", "unknown")
+                            words = page_result.get("word_count", 0)
+                            progress(f"Generated page for '{kw}': {words} words via {method}")
                         else:
-                            progress(f"Auto-generation failed for '{kw}': {page_result.get('error')}")
+                            progress(f"Generation failed for '{kw}': {page_result.get('error')}")
                             report["errors"].append({"phase": "auto_gen", "keyword": kw, "error": page_result.get("error")})
                     except Exception as gen_ex:
-                        progress(f"Critical generation error for '{kw}': {gen_ex}")
+                        progress(f"Critical error generating '{kw}': {gen_ex}")
                         report["errors"].append({"phase": "auto_gen", "keyword": kw, "error": str(gen_ex)})
+
 
         if dry_run:
             progress("Dry run complete. No changes would be applied.")
@@ -344,6 +392,8 @@ def apply_approved_plugin_fixes(task_id, approved_action_ids, approved_page_keyw
 # HELPERS
 # ─────────────────────────────────────────────────────────
 
+
+
 def _crawl(site_url, crawl_options, site_token=None):
     from urllib.parse import urlparse
     from src.utils.url_utils import build_clean_urls
@@ -359,6 +409,7 @@ def _crawl(site_url, crawl_options, site_token=None):
     crawl_assets = crawl_options.get("crawl_assets", False)
     backend = crawl_options.get("backend", "memory")
     concurrency = crawl_options.get("concurrency", 10)
+    delay = crawl_options.get("delay", 1.0)
     custom_selectors = crawl_options.get("custom_selectors", None)
     broken_links_only = crawl_options.get("broken_links_only", False)
     domain = urlparse(site_url).netloc
@@ -368,6 +419,7 @@ def _crawl(site_url, crawl_options, site_token=None):
         pages, graph = crawl_js_sync(
             site_url, 
             limit=limit, 
+            delay=delay,
             headers=headers, 
             crawl_assets=crawl_assets, 
             broken_links_only=broken_links_only

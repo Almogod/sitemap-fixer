@@ -113,7 +113,9 @@ _CTA_TEMPLATES = {
 }
 
 
-def analyze_competitors(competitor_urls: list, target_keyword: str, domain: str) -> ContentBrief:
+def analyze_competitors(competitor_urls: list, target_keyword: str, domain: str, 
+                       site_profile_md: str = "", niche: str = "", 
+                       audience_type: str = "General") -> ContentBrief:
     """
     Fetches competitor pages and builds a comprehensive content brief
     for a new page targeting `target_keyword`.
@@ -267,6 +269,9 @@ def analyze_competitors(competitor_urls: list, target_keyword: str, domain: str)
         cta_suggestions=cta_suggestions,
         competitor_urls=competitor_urls[:5],
         schema_type="Article",
+        site_profile_md=site_profile_md,
+        niche=niche,
+        audience_type=audience_type
     )
 
 

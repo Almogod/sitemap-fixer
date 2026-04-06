@@ -1,149 +1,104 @@
 # src/content/faq_generator.py
 """
-Keyword-driven FAQ Generator for sitewide SERP optimization.
-Generates FAQs directly from the site's discovered prime keywords,
-ensuring every question targets real search intent for that domain.
+Expert FAQ Generator (REWRITTEN).
+Eliminates generic templates. Uses Site Fragment Synthesis for fallback.
 """
 
 import re
 import json
 from collections import Counter
+from bs4 import BeautifulSoup
 from src.utils.logger import logger
-from src.content.stopwords import STOPWORDS
 from src.content.content_schema import FAQItem
 
-
-def generate_site_faqs(site_keywords, domain, llm_config):
+def generate_site_faqs(site_keywords, domain, llm_config, site_context=None):
     """
-    Generate 6-8 FAQs based on the actual keywords found on the site.
-    
-    Args:
-        site_keywords: list of keyword strings (already ranked by importance)
-        domain: the site's domain name
-        llm_config: LLM configuration dict
-    
-    Returns:
-        list of FAQItem objects
+    Expert FAQ pipeline: API-First, Fragment-Synthesis Fallback.
     """
-    logger.info(f"Generating keyword-driven FAQs for {domain} from {len(site_keywords)} keywords")
+    logger.info(f"FaqEngine: Synthesizing expert Q&A for {domain}")
+    site_context = site_context or {}
     
-    if not site_keywords:
-        logger.warning("No site keywords provided for FAQ generation")
-        return []
-
     faqs = []
     has_api = bool(llm_config.get("api_key")) or llm_config.get("provider") == "ollama"
 
     if has_api:
-        faqs = _generate_faqs_with_llm(site_keywords, domain, llm_config)
+        faqs = _generate_faqs_with_llm(site_keywords, domain, llm_config, site_context)
     
     if not faqs:
-        faqs = _generate_faqs_builtin(site_keywords, domain)
+        logger.info(f"FaqEngine: API unavailable or failed. Using Fragment Synthesis for {domain}")
+        faqs = _synthesize_faqs_from_fragments(site_keywords, domain, site_context)
 
-    # Validate and normalize all to strict FAQItem model
+    # Validate
     robust_faqs = []
-    for item in faqs:
-        if isinstance(item, dict) and "question" in item and "answer" in item:
-            q = str(item["question"]).strip()
-            a = str(item["answer"]).strip()
-            if len(q) > 10 and len(a) > 20:
-                robust_faqs.append(FAQItem(question=q, answer=a))
-    
-    logger.info(f"Generated {len(robust_faqs)} validated FAQs for {domain}")
+    for item in faqs[:8]:
+        q, a = item.get("question", ""), item.get("answer", "")
+        if len(q) > 15 and len(a) > 30:
+            robust_faqs.append(FAQItem(question=q, answer=a))
+            
     return robust_faqs
 
-
-def _generate_faqs_with_llm(keywords, domain, llm_config):
-    """Call LLM with the actual site keywords for targeted FAQ generation."""
-    from src.content.page_generator import _call_openai, _call_gemini, _call_ollama
+def _generate_faqs_with_llm(keywords, domain, llm_config, site_context):
+    """High-Fidelity Expert LLM FAQ Generation."""
+    from src.content.page_generator import _call_openai, _call_gemini, _call_ollama, _extract_json_from_llm
     
-    kw_list = ', '.join(keywords[:10])
-    prompt = f"""You are an expert SEO content strategist.
-
-The website '{domain}' has the following primary keywords discovered from its content:
-{kw_list}
-
-Generate exactly 7 FAQ questions and answers specifically about these keywords.
-Each FAQ MUST directly reference one or more of the keywords above.
-
-RULES:
-- Questions must use "What", "How", "Why", "Is", "Can", "Does" patterns
-- Answers must be 40-60 words, factual, and authoritative (E-E-A-T compliant)
-- Each answer must naturally include the keyword it targets
-- Do NOT generate generic business questions - every FAQ must be keyword-specific
-
-Respond with ONLY a valid JSON array of objects with "question" and "answer" fields. No other text."""
+    niche = site_context.get("niche", "Professional Services")
+    mission = site_context.get("mission", "")
     
-    provider = llm_config.get("provider", "openai").lower()
-    raw = None
+    prompt = f"""ROLE: You are the Lead Consultant at {domain} ({niche}).
+TASK: Generate 7 Expert-Level FAQs that prove deep industry authority.
+
+SITE MISSION: {mission}
+TOPICS: {', '.join(keywords[:8])}
+
+STRICT CONSTRAINTS:
+1. NO AI-ISMS: Forbidden terms include 'Unlock', 'Transform', 'Navigate', 'Delve', 'Landscape'.
+2. NO BASIC DEFINITIONS: Do not explain what a keyword is. Explain HOW {domain} implements it.
+3. DATA-DRIVEN: Use phrases like "Based on our fieldwork," "Historically, we've found," "Our methodology prioritizes."
+4. UNIQUE BRANDING: Every answer must reference a specific service or value from {domain}.
+
+OUTPUT: Strict JSON Array of {{"question": "", "answer": ""}}
+每一条 answer 必须在 60-100 字之间。
+"""
     try:
-        if provider == "openai":
-            raw = _call_openai(prompt, llm_config)
-        elif provider == "gemini":
-            raw = _call_gemini(prompt, llm_config)
-        elif provider == "ollama":
-            raw = _call_ollama(prompt, llm_config)
-            
-        if raw:
-            match = re.search(r"\[.*\]", raw, re.DOTALL)
-            if match:
-                parsed = json.loads(match.group(0))
-                logger.info(f"LLM generated {len(parsed)} FAQs for {domain}")
-                return parsed
+        provider = llm_config.get("provider", "openai").lower()
+        res = None
+        if provider == "openai": res = _call_openai(prompt, llm_config)
+        elif provider == "gemini": res = _call_gemini(prompt, llm_config)
+        elif provider == "ollama": res = _call_ollama(prompt, llm_config)
+        
+        data = _extract_json_from_llm(res)
+        return data if isinstance(data, list) else []
     except Exception as e:
-        logger.warning(f"FAQ LLM generation failed for {domain}: {e}")
-    return []
+        logger.error(f"FAQ LLM failed: {e}")
+        return []
 
-
-def _generate_faqs_builtin(keywords, domain):
+def _synthesize_faqs_from_fragments(keywords, domain, site_context):
     """
-    Generate FAQs directly from the site's keywords using intent-aware templates.
-    Each keyword gets its own targeted question.
+    Zero-Boilerplate Fallback. 
+    Builds FAQs by pairing top keywords with actual descriptive mission/service text.
     """
     faqs = []
+    mission = site_context.get("mission", "")
+    services = site_context.get("services", [])
+    niche = site_context.get("niche", "Expert Industry")
     
-    # Intent-aware question templates - each one targets a specific keyword
-    question_patterns = [
-        {
-            "q": "What is {keyword} and why is it important for {domain}?",
-            "a": "{keyword} is a core focus area for {domain}. It represents a key capability that drives value for users by providing specialized solutions, expert guidance, and measurable results in this domain."
-        },
-        {
-            "q": "How does {domain} approach {keyword} differently?",
-            "a": "{domain} takes a data-driven approach to {keyword}, combining industry best practices with proprietary techniques. This methodology ensures consistent, high-quality outcomes that exceed standard expectations in the field."
-        },
-        {
-            "q": "Why should users choose {domain} for {keyword} solutions?",
-            "a": "{domain} has built deep expertise in {keyword} through extensive practical experience. Users benefit from optimized workflows, transparent processes, and results that are specifically tailored to their unique requirements."
-        },
-        {
-            "q": "Can {keyword} be customized for specific use cases at {domain}?",
-            "a": "Yes, {domain} offers fully customizable {keyword} implementations. Every solution is adapted to match the client's specific industry, scale, and performance targets for maximum effectiveness and ROI."
-        },
-        {
-            "q": "What results can users expect from {keyword} at {domain}?",
-            "a": "Users implementing {keyword} through {domain} typically see measurable improvements in efficiency, performance, and user satisfaction. Results are tracked through comprehensive analytics and continuous optimization cycles."
-        },
-        {
-            "q": "Is {keyword} support available for enterprise clients at {domain}?",
-            "a": "{domain} provides enterprise-grade {keyword} support including dedicated account management, priority response times, custom integrations, and scalable infrastructure to handle any volume of operations."
-        },
-        {
-            "q": "How does {keyword} integrate with other services offered by {domain}?",
-            "a": "{keyword} seamlessly connects with the full suite of {domain} services. This integrated approach ensures data consistency, streamlined workflows, and a unified experience across all touchpoints and platforms."
-        },
-    ]
-    
-    # Assign each keyword to a question pattern
-    for i, pattern in enumerate(question_patterns):
-        kw = keywords[i % len(keywords)].capitalize()
+    # ── Strategy 1: Service-Based Q&A (High Fidelity) ─────────────
+    for s in services[:4]:
+        name = s.get("name") if isinstance(s, dict) else s
+        desc = s.get("detailed_description") if isinstance(s, dict) else ""
+        if not desc and mission: desc = mission
+        
         faqs.append({
-            "question": pattern["q"].format(keyword=kw, domain=domain),
-            "answer": pattern["a"].format(keyword=kw, domain=domain)
+            "question": f"How does {domain} specialize in {name}?",
+            "answer": f"{domain} provides targeted solutions for {name} within the {niche} sector. {desc} Our approach ensures that every {name} project meets specific industry standards while prioritizing client ROI."
         })
         
-        # Stop after covering enough keywords (max 7 FAQs)
-        if len(faqs) >= min(7, max(len(keywords), 5)):
-            break
-    
+    # ── Strategy 2: Keyword-Mission Pairing ───────────────────────
+    for kw in keywords[:3]:
+        if len(faqs) >= 7: break
+        faqs.append({
+            "question": f"What is the {domain} approach to {kw.title()}?",
+            "answer": f"At {domain}, {kw.title()} is integrated into our core mission of {mission}. We treat {kw} not just as a service, but as a strategic asset for our clients in the {niche} space."
+        })
+        
     return faqs
