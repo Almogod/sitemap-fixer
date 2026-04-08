@@ -25,20 +25,41 @@ def crawl(start_url, limit=200, extra_headers=None, max_depth=10, crawl_assets=F
     graph = CrawlGraph()
 
     # Pass the graph into the scheduler/worker system
-    pages = asyncio.run(
-        run_workers(
-            frontier, 
-            extract_links, 
-            graph, 
-            start_url=start_url,
-            limit=limit, 
-            concurrency=concurrency,
-            extra_headers=extra_headers,
-            max_depth=max_depth,
-            crawl_assets=crawl_assets,
-            custom_selectors=custom_selectors,
-            broken_links_only=broken_links_only
+    try:
+        pages = asyncio.run(
+            run_workers(
+                # ... args ...
+                frontier, 
+                extract_links, 
+                graph, 
+                start_url=start_url,
+                limit=limit, 
+                concurrency=concurrency,
+                extra_headers=extra_headers,
+                max_depth=max_depth,
+                crawl_assets=crawl_assets,
+                custom_selectors=custom_selectors,
+                broken_links_only=broken_links_only
+            )
         )
-    )
+    except RuntimeError:
+        # Fallback if a loop is already running in this thread
+        loop = asyncio.new_event_loop()
+        pages = loop.run_until_complete(
+            run_workers(
+                # ... args ...
+                frontier, 
+                extract_links, 
+                graph, 
+                start_url=start_url,
+                limit=limit, 
+                concurrency=concurrency,
+                extra_headers=extra_headers,
+                max_depth=max_depth,
+                crawl_assets=crawl_assets,
+                custom_selectors=custom_selectors,
+                broken_links_only=broken_links_only
+            )
+        )
 
     return pages, graph

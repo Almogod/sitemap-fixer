@@ -8,6 +8,7 @@ from src.utils.logger import logger, audit_logger
 from src.services.task_store import TaskStore
 from src.services.html_rewriter import apply_fixes
 from src.services.deployer import deploy
+from src.services.gsc_service import GSCService
 
 task_store = TaskStore()
 
@@ -119,6 +120,47 @@ def run_plugin(
                 if not context_data["pages"]:
                     progress("Skipping analysis: No pages crawled.")
                     continue
+                
+                # ═══════════════════════════════════════════════════
+                # STEP 0: GSC Analysis (Optional)
+                # ═══════════════════════════════════════════════════
+                gsc_res = {"available": False, "indexed": [], "unindexed": [], "gaps": {}}
+                gsc_service = GSCService()
+                if gsc_service.is_available():
+                    progress("GSC credentials found. Running Indexation Audit...")
+                    crawled_urls = [p["url"] for p in context_data["pages"]]
+                    
+                    # Also fetch sitemap URLs
+                    from src.services.sitemap_parser import get_sitemap_urls
+                    sitemap_urls = get_sitemap_urls(site_url)
+                    
+                    gsc_res["available"] = True
+                    gsc_res["gaps"] = gsc_service.analyze_sitemap_gaps(sitemap_urls, crawled_urls)
+                    
+                    # Inspect a sample or all (respecting limits/performance)
+                    # For now, let's inspect the first 100
+                    for url in crawled_urls[:100]:
+                        inspect_data = gsc_service.inspect_url(site_url, url)
+                        analytics = gsc_service.get_search_analytics(site_url, url)
+                        
+                        status_info = {
+                            "url": url,
+                            "status": inspect_data.get("indexStatusResult", {}).get("verdict", "Unknown"),
+                            "reason": inspect_data.get("indexStatusResult", {}).get("coverageState", "Unknown"),
+                            "clicks": analytics.get("clicks", 0),
+                            "impressions": analytics.get("impressions", 0),
+                            "ctr": analytics.get("ctr", 0),
+                            "position": analytics.get("position", 0)
+                        }
+                        
+                        if status_info["status"] == "PASS":
+                            gsc_res["indexed"].append(status_info)
+                        else:
+                            gsc_res["unindexed"].append(status_info)
+                    
+                    progress(f"GSC Audit: {len(gsc_res['indexed'])} indexed, {len(gsc_res['unindexed'])} unindexed")
+                
+                report["gsc_audit"] = gsc_res
                 
                 # ═══════════════════════════════════════════════════
                 # STEP 1: SEO Audit (standard engine analysis)
@@ -372,6 +414,54 @@ def apply_approved_plugin_fixes(task_id, approved_action_ids, approved_page_keyw
                 progress(f"Workflow monitor halted: {monitor_ex}")
                 report["workflow_error"] = str(monitor_ex)
 
+        # ═══════════════════════════════════════════════════
+        # STEP 5: Indexation Fixes (Conditional on GSC)
+        # ═══════════════════════════════════════════════════
+        gsc_service = GSCService()
+        if gsc_service.is_available():
+            progress("GSC credentials available. Fixing Indexation issues...")
+            gsc_audit = report.get("gsc_audit", {})
+            
+            # 5.1 Submit Unindexed URLs
+            unindexed = gsc_audit.get("unindexed", [])
+            submitted_count = 0
+            for item in unindexed:
+                if gsc_service.submit_for_indexing(item["url"]):
+                    submitted_count += 1
+            progress(f"Submitted {submitted_count} URLs to Google Indexing API")
+            
+            # 5.2 Fix Sitemap Gaps
+            gaps = gsc_audit.get("gaps", {})
+            missing_in_sitemap = gaps.get("missing_in_sitemap", [])
+            if missing_in_sitemap:
+                progress(f"Fixing sitemap gaps: adding {len(missing_in_sitemap)} URLs...")
+                try:
+                    # Fetch current sitemap
+                    from src.services.sitemap_parser import get_sitemap_urls
+                    # We need the raw XML to update it properly
+                    sitemap_url = site_url.rstrip("/") + "/sitemap.xml"
+                    import httpx
+                    res = httpx.get(sitemap_url, timeout=10)
+                    if res.status_code == 200:
+                        new_sitemap_xml = _add_urls_to_sitemap(res.text, missing_in_sitemap)
+                        deploy_res = deploy("sitemap.xml", new_sitemap_xml, deploy_config)
+                        if deploy_res.get("success"):
+                            progress("Successfully updated sitemap.xml on target site")
+                        else:
+                            progress(f"Sitemap deployment failed: {deploy_res.get('message')}")
+                except Exception as e:
+                    progress(f"Failed to fix sitemap automatically: {e}")
+
+            # 5.3 Generate Excel Report
+            report_file = f"indexing_report_{task_id}.xlsx"
+            gsc_service.generate_excel_report(
+                gsc_audit.get("indexed", []),
+                gsc_audit.get("unindexed", []),
+                report_file
+            )
+            report["indexing_report_file"] = report_file
+            progress(f"Indexing report generated: {report_file}")
+
         report["state"] = "completed"
         report["seo_score_after"] = _estimate_score_after(
             report.get("seo_score_before"),
@@ -551,3 +641,20 @@ def _estimate_score_after(score_before, fixes_count):
         return None
     improvement = min(fixes_count * 2, 30)  # cap at +30 points
     return min(score_before + improvement, 100)
+
+def _add_urls_to_sitemap(current_xml: str, new_urls: List[str]) -> str:
+    """Helper to inject new <url> entries into sitemap.xml."""
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(current_xml, "xml")
+    urlset = soup.find("urlset")
+    if not urlset:
+        return current_xml
+    
+    for url in new_urls:
+        url_tag = soup.new_tag("url")
+        loc_tag = soup.new_tag("loc")
+        loc_tag.string = url
+        url_tag.append(loc_tag)
+        urlset.append(url_tag)
+    
+    return str(soup)

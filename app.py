@@ -115,10 +115,12 @@ async def global_exception_handler(request: Request, exc: Exception):
 from src.api.router_tasks import router as tasks_router
 from src.api.router_crawl import router as crawl_router
 from src.api.router_plugin import router as plugin_router
+from src.api.router_gsc import router as gsc_router
 
 app.include_router(tasks_router, tags=["Tasks"])
 app.include_router(crawl_router, tags=["Crawl"])
 app.include_router(plugin_router, prefix="/plugin", tags=["Plugin"])
+app.include_router(gsc_router, tags=["GSC"])
 
 # Auth layer removed by user request
 

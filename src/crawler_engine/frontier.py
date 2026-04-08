@@ -64,7 +64,7 @@ class URLFrontier:
         if url not in self.visited:
             self.counter += 1
             # heapq is a min-heap, so we use -priority for a max-priority queue
-            heapq.heappush(self.queue, (-priority, self.counter, {"url": url, "depth": depth}))
+            heapq.heappush(self.queue, (-priority, self.counter, {"url": url, "depth": depth, "priority": priority}))
             self.visited.add(url)
 
     def get(self):
@@ -146,12 +146,12 @@ class SQLiteURLFrontier:
     def get(self):
         conn = self._get_conn()
         try:
-            res = conn.execute("SELECT id, url, depth FROM queue ORDER BY priority DESC, id ASC LIMIT 1").fetchone()
+            res = conn.execute("SELECT id, url, depth, priority FROM queue ORDER BY priority DESC, id ASC LIMIT 1").fetchone()
             if res:
-                id, url, depth = res
+                id, url, depth, priority = res
                 conn.execute("DELETE FROM queue WHERE id = ?", (id,))
                 conn.commit()
-                return {"url": url, "depth": depth}
+                return {"url": url, "depth": depth, "priority": priority}
         except Exception as e:
             logger.error(f"SQLite get error: {e}")
         return None

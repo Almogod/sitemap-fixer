@@ -369,15 +369,63 @@
             <h3 class="ai-world-title" style="font-size: 0.95rem; margin-bottom: 0; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em;">The Data World of AI ✨</h3>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-            <div>
-                <p><b>Target:</b> {{plugin_report.site_url}}</p>
-                <p><b>Status:</b> <span class="badge" style="background: var(--primary-color);">{{plugin_report.state|upper}}</span></p>
-            </div>
             <div style="text-align: right;">
                 <p><b>Initial Score:</b> {{plugin_report.seo_score_before}}</p>
                 <p><b>Suggested Fixes:</b> {{plugin_report.suggested_actions|length}}</p>
             </div>
         </div>
+
+        <!-- NEW: INDEXATION STATUS CARD -->
+        {% if plugin_report.gsc_audit and plugin_report.gsc_audit.available %}
+        <div class="indexation-card glass-card" style="margin-bottom: 25px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); padding: 20px; border-radius: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #3b82f6; display: flex; align-items: center; gap: 10px;">
+                    <svg style="width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
+                    </svg>
+                    Google Indexation Status
+                </h3>
+                {% if plugin_report.indexing_report_file %}
+                <a href="/gsc/download_report?task_id={{task_id}}" class="btn-sm" style="background: #3b82f6; border: none; color: white; padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 0.8rem;">Download Excel Report</a>
+                {% endif %}
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div class="stat-card" style="background: rgba(255,255,255,0.03);">
+                    <h4 style="font-size: 0.75rem; opacity: 0.7;">Indexed Pages</h4>
+                    <div class="value" style="color: #10b981; font-size: 1.5rem;">{{ plugin_report.gsc_audit.indexed | length }}</div>
+                </div>
+                <div class="stat-card" style="background: rgba(255,255,255,0.03);">
+                    <h4 style="font-size: 0.75rem; opacity: 0.7;">Unindexed Pages</h4>
+                    <div class="value" style="color: #ef4444; font-size: 1.5rem;">{{ plugin_report.gsc_audit.unindexed | length }}</div>
+                </div>
+                <div class="stat-card" style="background: rgba(255,255,255,0.03);">
+                    <h4 style="font-size: 0.75rem; opacity: 0.7;">Sitemap Gaps</h4>
+                    <div class="value" style="color: #f59e0b; font-size: 1.5rem;">{{ plugin_report.gsc_audit.gaps.missing_in_sitemap | length }}</div>
+                </div>
+            </div>
+
+            {% if plugin_report.gsc_audit.unindexed %}
+            <div style="margin-top: 15px;">
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">Issues found that can be solved via Indexing API:</p>
+                <div style="max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+                    {% for item in plugin_report.gsc_audit.unindexed %}
+                        <div style="font-size: 0.75rem; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <span style="color: #ef4444;">•</span> {{ item.url }} 
+                            <span style="opacity: 0.5;">({{ item.reason }})</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if plugin_report.gsc_audit.gaps.missing_in_sitemap %}
+            <div style="margin-top: 15px; padding: 10px; background: rgba(245, 158, 11, 0.1); border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.2);">
+                <p style="font-size: 0.85rem; color: #f59e0b; margin: 0;">Missing from Sitemap: {{ plugin_report.gsc_audit.gaps.missing_in_sitemap | length }} URLs detected on site but not in sitemap.xml. Will be fixed upon approval.</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
 
         <!-- NEW: SITE PROFILE SECTION -->
         <div class="review-section" style="margin-top: 20px; border-top: 1px solid var(--card-border); padding-top: 20px;">
@@ -718,6 +766,19 @@
                 </h3>
                 <p>Applied {{plugin_report.fixes_applied|length}} fixes and generated {{plugin_report.pages_generated|length}} new pages.</p>
                 
+                {% if plugin_report.gsc_audit and plugin_report.gsc_audit.available %}
+                <div style="margin-top: 15px; padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                    <strong style="color: #3b82f6; display: block; margin-bottom: 5px;">Indexation Fixes:</strong>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; color: var(--text-color);">
+                        <li>Submitted {{ plugin_report.gsc_audit.unindexed | length }} URLs for re-indexing.</li>
+                        {% if plugin_report.gsc_audit.gaps.missing_in_sitemap %}
+                        <li>Optimized sitemap.xml with missing URLs.</li>
+                        {% endif %}
+                        <li><a href="/gsc/download_report?task_id={{task_id}}" style="color: #3b82f6; font-weight: 600;">Download Indexing Excel Report</a></li>
+                    </ul>
+                </div>
+                {% endif %}
+
                 {% if total_failed > 0 %}
                 <div style="margin-top: 15px; padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);">
                     <strong style="color: #ef4444; display: block; margin-bottom: 5px;">Deployment Failures:</strong>

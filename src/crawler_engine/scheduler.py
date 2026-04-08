@@ -73,6 +73,7 @@ async def run_workers(frontier, parser, graph, start_url=None, limit=200, concur
 
                 url = item["url"]
                 depth = item["depth"]
+                priority = item.get("priority", 0)
 
                 try:
                     # Robots check
@@ -110,8 +111,8 @@ async def run_workers(frontier, parser, graph, start_url=None, limit=200, concur
                                 logger.info(f"Test found external redirect: {url} -> {target_url} (Stopped)")
                                 page["redirect_to_external"] = target_url
                             else:
-                                logger.info(f"Following internal redirect: {url} -> {target_url}")
-                                frontier.add(target_url, depth=depth, priority=priority+1) # High priority for redirects
+                                 logger.info(f"Following internal redirect: {url} -> {target_url}")
+                                 frontier.add(target_url, depth=depth, priority=priority + 1) # High priority for redirects
                         
                     if broken_links_only:
                         if (url == comp_url) or (status and status not in [200, 304]):
