@@ -4,6 +4,11 @@ import time
 from src.config import config
 from collections import deque
 from urllib.parse import urlparse, urlunparse
+import threading
+
+# Global supplement for fast visited checks
+_GLOBAL_VISITED = set()
+_VISITED_LOCK = threading.Lock()
 
 def ensure_scheme(url: str, default_scheme: str = "https") -> str:
     """Ensure the URL has a scheme (defaulting to https)."""
@@ -54,18 +59,21 @@ class URLFrontier:
         
         url = ensure_scheme(url)
         
+        with _VISITED_LOCK:
+            if url in _GLOBAL_VISITED:
+                return
+            _GLOBAL_VISITED.add(url)
+
         if self.base_domain and not force_add:
             parsed = urlparse(url)
-            # RELAXED: Only lock domain, not path, unless path-specific crawling is requested.
+            # RELAXED: Only lock domain
             if parsed.netloc and not is_internal_domain(parsed.netloc, self.base_domain):
                 return
-            # Path locking disabled by default to allow discovering the whole site.
 
-        if url not in self.visited:
-            self.counter += 1
-            # heapq is a min-heap, so we use -priority for a max-priority queue
-            heapq.heappush(self.queue, (-priority, self.counter, {"url": url, "depth": depth, "priority": priority}))
-            self.visited.add(url)
+        self.counter += 1
+        # heapq is a min-heap, so we use -priority for a max-priority queue
+        heapq.heappush(self.queue, (-priority, self.counter, {"url": url, "depth": depth, "priority": priority}))
+        self.visited.add(url)
 
     def get(self):
         if self.queue:
@@ -105,6 +113,8 @@ class SQLiteURLFrontier:
                 self.base_path = path
 
         conn = self._get_conn()
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=30000") # 30s
         conn.execute("CREATE TABLE IF NOT EXISTS queue (id INTEGER PRIMARY KEY, url TEXT, depth INTEGER, priority INTEGER DEFAULT 0)")
         conn.execute("CREATE TABLE IF NOT EXISTS visited (url TEXT PRIMARY KEY)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_visited ON visited(url)")
@@ -114,7 +124,7 @@ class SQLiteURLFrontier:
     def _get_conn(self):
         import sqlite3
         if not hasattr(self._local, 'conn'):
-            self._local.conn = sqlite3.connect(self.db_path, check_same_thread=False)
+            self._local.conn = sqlite3.connect(self.db_path, check_same_thread=False, timeout=30)
             self._local.conn.execute("PRAGMA journal_mode=WAL")
             self._local.conn.execute("PRAGMA synchronous=NORMAL")
             self._local.conn.execute("PRAGMA cache_size=-64000") # 64MB cache
@@ -126,22 +136,31 @@ class SQLiteURLFrontier:
         
         url = ensure_scheme(url)
         
+        # 1. High-speed global check
+        with _VISITED_LOCK:
+            if url in _GLOBAL_VISITED:
+                return
+            _GLOBAL_VISITED.add(url)
+        
+        # 2. Domain enforcement
         if self.base_domain and not force_add:
             parsed = urlparse(url)
-            # FIX: Use shared 'www-agnostic' check
             if parsed.netloc and not is_internal_domain(parsed.netloc, self.base_domain):
                 return
-            # Path locking disabled by default
 
+        # 3. Persistence layer
         conn = self._get_conn()
         try:
-            # Atomic: Only insert if not visited
-            conn.execute("INSERT OR IGNORE INTO visited (url) VALUES (?)", (url,))
-            if conn.total_changes > 0:
+            # Use IMMEDIATE to lock for write early and avoid deadlocks
+            conn.execute("BEGIN IMMEDIATE")
+            res = conn.execute("INSERT OR IGNORE INTO visited (url) VALUES (?)", (url,))
+            if res.rowcount > 0:
                 conn.execute("INSERT INTO queue (url, depth, priority) VALUES (?, ?, ?)", (url, depth, priority))
-                conn.commit()
+            conn.commit()
         except Exception as e:
             logger.debug(f"SQLite add conflict for {url}: {e}")
+            try: conn.execute("ROLLBACK")
+            except: pass
 
     def get(self):
         conn = self._get_conn()

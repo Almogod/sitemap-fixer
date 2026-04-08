@@ -113,6 +113,8 @@ async def run_workers(frontier, parser, graph, start_url=None, limit=200, concur
                             else:
                                  logger.info(f"Following internal redirect: {url} -> {target_url}")
                                  frontier.add(target_url, depth=depth, priority=priority + 1) # High priority for redirects
+                                 async with cv:
+                                     cv.notify_all()
                         
                     if broken_links_only:
                         if (url == comp_url) or (status and status not in [200, 304]):
@@ -142,11 +144,15 @@ async def run_workers(frontier, parser, graph, start_url=None, limit=200, concur
                                 pass 
                             else:
                                 frontier.add(link, depth=depth + 1, priority=10)
+                                async with cv:
+                                    cv.notify_all()
                             
                         if crawl_assets:
                             for asset in extracted.get("assets", []):
                                 graph.add_edge(page["url"], asset)
                                 frontier.add(asset, depth=max_depth + 1, force_add=True, priority=5)
+                                async with cv:
+                                    cv.notify_all()
                 except Exception as e:
                     logger.error(f"Worker Error: {e}")
                 finally:
