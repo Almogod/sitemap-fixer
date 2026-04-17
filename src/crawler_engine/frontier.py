@@ -5,7 +5,6 @@ from src.config import config
 from collections import deque
 from urllib.parse import urlparse, urlunparse
 import threading
-import threading
 
 def ensure_scheme(url: str, default_scheme: str = "https") -> str:
     """Ensure the URL has a scheme (defaulting to https)."""

@@ -9,7 +9,7 @@ from src.config import config
 from src.utils.logger import logger
 
 
-async def run_workers(frontier, parser, graph, start_url=None, limit=200, concurrency=10, delay=1.0, check_robots=True, extra_headers=None, broken_links_only=False, max_depth=10, crawl_assets=False, custom_selectors=None, user_agent="chrome"):
+async def run_workers(frontier, parser, graph, start_url=None, progress_callback=None, limit=200, concurrency=10, delay=1.0, check_robots=True, extra_headers=None, broken_links_only=False, max_depth=10, crawl_assets=False, custom_selectors=None, user_agent="chrome"):
     results = []
     class USER_AGENTS:
         chrome = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -64,11 +64,19 @@ async def run_workers(frontier, parser, graph, start_url=None, limit=200, concur
             while True:
                 item = None
                 async with cv:
+                    # Wait for either: frontier has items, limit reached, or all workers idle
                     while not frontier.size() and checked_pages < limit:
                         if active_workers == 0:
                             cv.notify_all()
                             return
-                        await cv.wait()
+                        try:
+                            await asyncio.wait_for(cv.wait(), timeout=5.0)
+                        except asyncio.TimeoutError:
+                            # Re-check conditions after timeout
+                            if not frontier.size() and active_workers == 0:
+                                cv.notify_all()
+                                return
+                            continue
                     
                     if checked_pages >= limit:
                         cv.notify_all()
@@ -78,6 +86,8 @@ async def run_workers(frontier, parser, graph, start_url=None, limit=200, concur
                     if item:
                         active_workers += 1
                         checked_pages += 1
+                        if progress_callback and checked_pages % 10 == 0:
+                            progress_callback(f"Active Crawl: {checked_pages}/{limit} pages checked")
 
                 if not item: continue
 
@@ -89,6 +99,10 @@ async def run_workers(frontier, parser, graph, start_url=None, limit=200, concur
                     # Robots check
                     if rp and not rp.can_fetch("*", url):
                         logger.warning(f"Skipping {url} (Blocked by robots.txt)")
+                        # Don't 'continue' - fall through to finally to decrement active_workers
+                        async with cv:
+                            active_workers -= 1
+                            cv.notify_all()
                         continue
 
                     async with semaphore:
@@ -96,7 +110,11 @@ async def run_workers(frontier, parser, graph, start_url=None, limit=200, concur
                         # We handle redirects manually for strict domain locking
                         page = await fetch(client, url, follow_redirects=False)
 
-                    if not page: continue
+                    if not page:
+                        async with cv:
+                            active_workers -= 1
+                            cv.notify_all()
+                        continue
                     
                     status = page.get("status")
                     final_url = page.get("final_url", url)
@@ -177,3 +195,4 @@ async def run_workers(frontier, parser, graph, start_url=None, limit=200, concur
         await asyncio.gather(*workers)
 
     return results
+

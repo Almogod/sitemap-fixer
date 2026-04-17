@@ -42,9 +42,16 @@ def run_analysis_task(task_id: str, domain: str, limit: int, use_js: bool, fix_c
                 
             frontier.add(domain)
             graph = CrawlGraph()
-            pages = asyncio.run(run_workers(frontier, extract_links, graph, limit=limit, delay=delay, check_robots=check_robots, broken_links_only=broken_links_only, max_depth=max_depth, crawl_assets=crawl_assets, concurrency=concurrency, custom_selectors=custom_selectors, user_agent=user_agent))
+            
+            # Create a simple background progress thread or just update status here initially
+            task_store.set_status(task_id, f"Initializing Enterprise Crawl ({limit} pages)...")
+            
+            def p_callback(msg):
+                task_store.set_status(task_id, msg)
+                
+            pages = asyncio.run(run_workers(frontier, extract_links, graph, start_url=domain, progress_callback=p_callback, limit=limit, delay=delay, check_robots=check_robots, broken_links_only=broken_links_only, max_depth=max_depth, crawl_assets=crawl_assets, concurrency=concurrency, custom_selectors=custom_selectors, user_agent=user_agent))
         
-        task_store.set_status(task_id, "Checking existing sitemap...")
+        task_store.set_status(task_id, f"Crawler finished, harvested {len(pages)} pages. Checking sitemap...")
         sitemap_urls = get_sitemap_urls(domain)
         for url in sitemap_urls:
             if len(pages) >= limit: break
