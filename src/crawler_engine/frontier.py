@@ -5,10 +5,7 @@ from src.config import config
 from collections import deque
 from urllib.parse import urlparse, urlunparse
 import threading
-
-# Global supplement for fast visited checks
-_GLOBAL_VISITED = set()
-_VISITED_LOCK = threading.Lock()
+import threading
 
 def ensure_scheme(url: str, default_scheme: str = "https") -> str:
     """Ensure the URL has a scheme (defaulting to https)."""
@@ -44,6 +41,8 @@ class URLFrontier:
         self.base_domain = None
         self.base_path = ""
         self.counter = 0 # To ensure stable sort for same priority
+        self._local_visited = set()
+        self._visited_lock = threading.Lock()
         
         if base_domain:
             normalized = ensure_scheme(base_domain)
@@ -59,10 +58,10 @@ class URLFrontier:
         
         url = ensure_scheme(url)
         
-        with _VISITED_LOCK:
-            if url in _GLOBAL_VISITED:
+        with self._visited_lock:
+            if url in self._local_visited:
                 return
-            _GLOBAL_VISITED.add(url)
+            self._local_visited.add(url)
 
         if self.base_domain and not force_add:
             parsed = urlparse(url)
@@ -104,6 +103,8 @@ class SQLiteURLFrontier:
         
         self.base_domain = None
         self.base_path = ""
+        self._local_visited = set()
+        self._visited_lock = threading.Lock()
         if base_domain:
             normalized = ensure_scheme(base_domain)
             parsed = urlparse(normalized)
@@ -137,10 +138,10 @@ class SQLiteURLFrontier:
         url = ensure_scheme(url)
         
         # 1. High-speed global check
-        with _VISITED_LOCK:
-            if url in _GLOBAL_VISITED:
+        with self._visited_lock:
+            if url in self._local_visited:
                 return
-            _GLOBAL_VISITED.add(url)
+            self._local_visited.add(url)
         
         # 2. Domain enforcement
         if self.base_domain and not force_add:

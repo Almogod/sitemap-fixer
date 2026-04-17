@@ -1162,8 +1162,8 @@
             formData.forEach((value, key) => {
                 // Type casting for Pydantic
                 if (value === 'true') value = true;
-                if (value === 'false') value = false;
-                if (!isNaN(value) && value.trim() !== "" && key !== 'domain' && key !== 'site_url' && key !== 'openai_key' && key !== 'gemini_key') {
+                else if (value === 'false') value = false;
+                else if (typeof value === 'string' && !isNaN(value) && value.trim() !== "" && key !== 'domain' && key !== 'site_url' && key !== 'openai_key' && key !== 'gemini_key') {
                     value = Number(value);
                 }
                 
