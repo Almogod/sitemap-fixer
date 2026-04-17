@@ -1,4 +1,12 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://https://www.qcecuring.com/sitemap.xml
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /preview/
+Disallow: /draft/
+Disallow: /certificates/
+
+Sitemap: https://www.qcecuring.com/sitemap.xml
+Sitemap: https://www.qcecuring.com/image-sitemap.xml
