@@ -200,8 +200,8 @@ async def run_plugin(
                 
                 if homepage_page and homepage_page.get("html"):
                     try:
-                        processed_bus = await process_html_content(site_url, homepage_page["html"])
-                        site_analysis_report = synthesize_business_analysis(context_data["domain"], processed_bus.get("structured_data", []))
+                        processed_bus = await process_html_content(site_url, homepage_page["html"], llm_config=llm_config)
+                        site_analysis_report = synthesize_business_analysis(context_data["domain"], processed_bus.get("structured_data", []), llm_config=llm_config)
                         report["site_analysis_report"] = site_analysis_report
                         progress("Strategic Site Analysis generated.")
                     except Exception as sae:

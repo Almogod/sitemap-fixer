@@ -23,7 +23,7 @@ async def process_site_homepage(url: str):
     html = result.get("html", "")
     return await process_html_content(url, html)
 
-async def process_html_content(url: str, html: str):
+async def process_html_content(url: str, html: str, llm_config: dict = None):
     """
     Cleans, chunks, and structures the business analysis from provided HTML.
     """
@@ -35,7 +35,7 @@ async def process_html_content(url: str, html: str):
     structured_data = []
     for i, chunk in enumerate(chunks):
         logger.info(f"Processing chunk {i+1}/{len(chunks)}...")
-        extracted = await structure_business_chunk(chunk)
+        extracted = await structure_business_chunk(chunk, llm_config)
         if extracted:
             structured_data.append(extracted)
             
@@ -46,7 +46,7 @@ async def process_html_content(url: str, html: str):
         "structured_data": structured_data
     }
 
-async def structure_business_chunk(chunk: str):
+async def structure_business_chunk(chunk: str, llm_config: dict = None):
     """
     Sends a chunk to the LLM to extract business-specific data points.
     """
@@ -71,25 +71,40 @@ STRICT JSON OUTPUT:
 }}
 """
     
-    llm_config = {
-        "provider": config.LLM_PROVIDER,
-        "api_key": config.OPENAI_API_KEY.get_secret_value() if config.OPENAI_API_KEY else None,
-        "gemini_key": config.GEMINI_API_KEY.get_secret_value() if config.GEMINI_API_KEY else None,
-        "model": "gpt-4o-mini" if config.LLM_PROVIDER == "openai" else "gemini-1.5-flash"
-    }
+    if not llm_config:
+        llm_config = {
+            "provider": config.LLM_PROVIDER,
+            "api_key": config.OPENAI_API_KEY.get_secret_value() if config.OPENAI_API_KEY else None,
+            "gemini_key": config.GEMINI_API_KEY.get_secret_value() if config.GEMINI_API_KEY else None,
+            "model": "gpt-4o-mini" if config.LLM_PROVIDER == "openai" else "gemini-1.5-flash"
+        }
+    
+    # Provider-specific key resolution if not explicitly set
+    provider = llm_config.get("provider", config.LLM_PROVIDER)
+    api_key = llm_config.get("api_key")
+    
+    if not api_key:
+        if provider == "openai":
+            api_key = llm_config.get("openai_key") or (config.OPENAI_API_KEY.get_secret_value() if config.OPENAI_API_KEY else None)
+        elif provider == "gemini":
+            api_key = llm_config.get("gemini_key") or (config.GEMINI_API_KEY.get_secret_value() if config.GEMINI_API_KEY else None)
+        elif provider == "ollama":
+            api_key = "ollama"
 
-    # Ensure provider key is set for the call functions Expectation
-    if llm_config["provider"] == "gemini":
-        llm_config["api_key"] = llm_config["gemini_key"]
+    # Internal call expects "api_key"
+    call_config = llm_config.copy()
+    call_config["api_key"] = api_key
+    model = "gpt-4o-mini" if provider == "openai" else "gemini-1.5-flash"
+    call_config["model"] = model
 
     try:
         raw_res = ""
-        if llm_config["provider"] == "openai":
-            raw_res = _call_openai(prompt, llm_config)
-        elif llm_config["provider"] == "gemini":
-            raw_res = _call_gemini(prompt, llm_config)
-        elif llm_config["provider"] == "ollama":
-            raw_res = _call_ollama(prompt, llm_config)
+        if provider == "openai":
+            raw_res = _call_openai(prompt, call_config)
+        elif provider == "gemini":
+            raw_res = _call_gemini(prompt, call_config)
+        elif provider == "ollama":
+            raw_res = _call_ollama(prompt, call_config)
             
         return _extract_json_from_llm(raw_res)
     except Exception as e:

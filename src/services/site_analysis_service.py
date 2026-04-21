@@ -3,7 +3,7 @@ from src.config import config
 from src.utils.logger import logger
 import json
 
-def synthesize_business_analysis(domain: str, structured_data: list) -> str:
+def synthesize_business_analysis(domain: str, structured_data: list, llm_config: dict = None) -> str:
     """
     Takes all structured chunks and synthesizes them into a final report.
     """
@@ -30,24 +30,37 @@ REPORT STRUCTURE:
 Use professional, authoritative markdown.
 """
 
-    llm_config = {
-        "provider": config.LLM_PROVIDER,
-        "api_key": config.OPENAI_API_KEY.get_secret_value() if config.OPENAI_API_KEY else None,
-        "gemini_key": config.GEMINI_API_KEY.get_secret_value() if config.GEMINI_API_KEY else None,
-        "model": "gpt-4o-mini" if config.LLM_PROVIDER == "openai" else "gemini-1.5-flash"
-    }
+    if not llm_config:
+        llm_config = {
+            "provider": config.LLM_PROVIDER,
+            "api_key": config.OPENAI_API_KEY.get_secret_value() if config.OPENAI_API_KEY else None,
+            "gemini_key": config.GEMINI_API_KEY.get_secret_value() if config.GEMINI_API_KEY else None,
+            "model": "gpt-4o-mini" if config.LLM_PROVIDER == "openai" else "gemini-1.5-flash"
+        }
     
-    if llm_config["provider"] == "gemini":
-        llm_config["api_key"] = llm_config["gemini_key"]
+    provider = llm_config.get("provider", config.LLM_PROVIDER)
+    api_key = llm_config.get("api_key")
+    
+    if not api_key:
+        if provider == "openai":
+            api_key = llm_config.get("openai_key") or (config.OPENAI_API_KEY.get_secret_value() if config.OPENAI_API_KEY else None)
+        elif provider == "gemini":
+            api_key = llm_config.get("gemini_key") or (config.GEMINI_API_KEY.get_secret_value() if config.GEMINI_API_KEY else None)
+        elif provider == "ollama":
+            api_key = "ollama"
+
+    # Internal call expects "api_key"
+    call_config = llm_config.copy()
+    call_config["api_key"] = api_key
 
     try:
         report = ""
-        if llm_config["provider"] == "openai":
-            report = _call_openai(prompt, llm_config)
-        elif llm_config["provider"] == "gemini":
-            report = _call_gemini(prompt, llm_config)
-        elif llm_config["provider"] == "ollama":
-            report = _call_ollama(prompt, llm_config)
+        if provider == "openai":
+            report = _call_openai(prompt, call_config)
+        elif provider == "gemini":
+            report = _call_gemini(prompt, call_config)
+        elif provider == "ollama":
+            report = _call_ollama(prompt, call_config)
             
         return report
     except Exception as e:
