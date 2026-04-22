@@ -83,19 +83,23 @@ async def run_plugin_task(
             if models_res.status_code == 200:
                 available = [m['name'] for m in models_res.json().get('models', [])]
                 if not available:
-                    raise HTTPException(status_code=400, detail="No Ollama models found. Please run 'ollama pull llama3' in your terminal.")
+                    raise HTTPException(status_code=400, detail="No Ollama models found. Please run 'ollama pull' to get a local model.")
                 
-                target_model = data.ollama_model or "llama3"
-                # Check for exact or base match
-                if not any(target_model in m for m in available):
-                     raise HTTPException(status_code=400, detail=f"Ollama model '{target_model}' not found. Available: {', '.join(available)}. Please pull the correct model.")
+                # If user didn't specify a model, or it's just the default string, use the first one available
+                if not data.ollama_model or data.ollama_model == "llama3":
+                    data.ollama_model = available[0]
+                    logger.info(f"Ollama: Utilizing locally available model: '{data.ollama_model}'")
+                
+                # Ensure the selected model actually exists
+                if not any(data.ollama_model in m for m in available):
+                     data.ollama_model = available[0]
+                     logger.info(f"Ollama: Requested model not found. Utilizing: '{data.ollama_model}'")
             else:
-                 raise HTTPException(status_code=400, detail=f"Ollama returned error {models_res.status_code} when checking models.")
-        except httpx.ConnectError:
-             raise HTTPException(status_code=400, detail=f"Could not connect to Ollama at {final_ollama}. Is it running?")
+                 raise HTTPException(status_code=400, detail=f"Ollama returned error {models_res.status_code}")
         except Exception as e:
-            if isinstance(e, HTTPException): raise e
-            logger.warning(f"Ollama model check failed: {e}")
+            logger.error(f"Ollama connection/discovery failed: {e}")
+            raise HTTPException(status_code=400, detail=f"Ollama Error: Could not verify models at {final_ollama}. Details: {str(e)}")
+        api_key = "ollama"
 
     task_store.set_status(task_id, "In Progress", domain=data.site_url)
 

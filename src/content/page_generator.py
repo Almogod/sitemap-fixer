@@ -276,30 +276,42 @@ def _call_gemini(prompt, config):
 
 def _call_ollama(prompt, config):
     import httpx
+    import time
     host = config.get('ollama_host', 'http://localhost:11434').rstrip('/')
     model = config.get("ollama_model", "llama3")
     
-    try:
-        res = httpx.post(
-            f"{host}/api/generate", 
-            json={"model": model, "prompt": prompt, "stream": False}, 
-            timeout=180.0
-        )
-        if res.status_code == 200:
-            return res.json().get("response", "")
-        elif res.status_code == 404:
-            # Model not found? Try to list models to help debug
-            logger.error(f"Ollama Error: Model '{model}' not found on {host}. Please run 'ollama pull {model}'")
-            return f"Error: Ollama model '{model}' not found. Please pull it locally."
-        else:
-            logger.error(f"Ollama Error {res.status_code}: {res.text}")
-            return f"Error: Ollama returned {res.status_code}"
-    except httpx.ConnectError:
-        logger.error(f"Ollama Error: Could not connect to {host}. Is Ollama running?")
-        return "Error: Could not connect to Ollama. Ensure it is running locally."
-    except Exception as e:
-        logger.error(f"Ollama Exception: {str(e)}")
-        return f"Error: {str(e)}"
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            res = httpx.post(
+                f"{host}/api/generate", 
+                json={"model": model, "prompt": prompt, "stream": False}, 
+                timeout=300.0
+            )
+            if res.status_code == 200:
+                return res.json().get("response", "")
+            elif res.status_code == 500 and "terminated" in res.text:
+                logger.warning(f"Ollama runner terminated (Attempt {attempt+1}/{max_retries}). Retrying in 5s...")
+                time.sleep(5)
+                continue
+            elif res.status_code == 404:
+                logger.error(f"Ollama Error: Model '{model}' not found on {host}.")
+                return f"Error: Ollama model '{model}' not found."
+            else:
+                logger.error(f"Ollama Error {res.status_code}: {res.text}")
+                return f"Error: Ollama returned {res.status_code}"
+        except httpx.ConnectError:
+            logger.error(f"Ollama Error: Could not connect to {host}. Is Ollama running?")
+            return "Error: Could not connect to Ollama."
+        except Exception as e:
+            if attempt < max_retries - 1:
+                logger.warning(f"Ollama Exception: {e}. Retrying...")
+                time.sleep(2)
+                continue
+            logger.error(f"Ollama Exception: {str(e)}")
+            return f"Error: {str(e)}"
+    
+    return "Error: Ollama runner terminated repeatedly."
 
 def _call_openrouter(prompt, config):
     import httpx
