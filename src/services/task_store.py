@@ -7,6 +7,9 @@ class TaskStore:
     Optimized for thread-safe operations in FastAPI.
     """
     def __init__(self):
+        pass
+
+    def init(self):
         init_db()
 
     def set_status(self, task_id: str, status: str, error: str = None, domain: str = None):

@@ -183,10 +183,10 @@ class BrainAnimation {
             y: 0,
             z: 0,
             vx: (Math.random() - 0.5) * 2, // Slower lateral drift
-            vy: (Math.random() - 0.5) * 1,
-            vz: 1.8, // Slow-motion fly for readability
+            vy: (Math.random() - 0.5) * 0.5,
+            vz: 0.8, // Slow-motion fly for readability
             opacity: 0,
-            life: 3.0 // Longer life for readability
+            life: 4.0 // Longer life for readability
         });
     }
 
@@ -293,18 +293,24 @@ class BrainAnimation {
                 continue;
             }
             
-            const t_perspective = 500 / Math.max(1, (500 + l.z));
-            const t_size = Math.floor(18 * t_perspective); // Slightly larger
+            
+            const t_perspective = 600 / Math.max(10, (600 + l.z));
+            const t_size = Math.floor(22 * t_perspective); 
             const drawX = centerX + l.x * t_perspective;
-            const drawY = centerY + (l.y - 120) * t_perspective; 
+            const drawY = centerY + (l.y - 40) * t_perspective; 
 
             this.ctx.font = `800 ${t_size}px "Outfit"`;
             // Improved Fade Logic: Faster fade-in, slower fade-out
-            const lifeAlpha = Math.min(l.life * 2, 1.0); 
-            const distAlpha = Math.min(1.0, (480 + l.z) / 100);
+            const lifeAlpha = Math.min(l.life * 1.5, 1.0); 
+            const distAlpha = Math.min(1.0, (580 + l.z) / 100);
             this.ctx.globalAlpha = Math.max(0, lifeAlpha * distAlpha);
+            
+            // Add cinematic text shadow for readability
+            this.ctx.shadowBlur = 15;
+            this.ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
             this.ctx.fillStyle = '#fff';
             this.ctx.fillText(l.text, drawX, drawY);
+            this.ctx.shadowBlur = 0; // Reset
         }
 
         this.ctx.globalAlpha = 1.0;

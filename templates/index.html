@@ -10,6 +10,13 @@
 <body>
     <canvas id="bg-canvas"></canvas>
 
+    <div id="loading-overlay" class="hidden">
+        <div class="status-container">
+            <div class="status-pulse"></div>
+            <div id="status-display">Initializing UrlForge Engine...</div>
+        </div>
+    </div>
+
     <div class="nav-container">
         <nav class="modern-nav">
             <div class="nav-logo">URLFORGE</div>
@@ -217,13 +224,6 @@
         </div>
 
 
-        <!-- LOADING UI INLINE -->
-        <div id="loading-overlay" class="hidden" style="margin-top: 30px; border-top: 1px solid var(--card-border); padding-top: 25px;">
-            <div class="status-container">
-                <div class="status-pulse"></div>
-                <div id="status-display">Initializing UrlForge Engine...</div>
-            </div>
-        </div>
     </div>
 
     <!-- ERROR STATE -->

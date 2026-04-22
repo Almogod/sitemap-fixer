@@ -8,6 +8,7 @@ import concurrent.futures
 from typing import Optional, Union
 from urllib.parse import urlparse
 from datetime import datetime # Added for /health endpoint
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Form, BackgroundTasks, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
@@ -48,10 +49,20 @@ if sys.platform == 'win32':
 
 # Rate Limiter setup
 limiter = Limiter(key_func=get_remote_address)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Heavy initialization happens here after server start
+    task_store.init()
+    logger.info("UrlForge Engine fully initialized")
+    yield
+
+# Initialize FastAPI
 app = FastAPI(
     title=config.APP_NAME,
     docs_url="/docs" if config.APP_ENV != "enterprise" else None,
-    redoc_url="/redoc" if config.APP_ENV != "enterprise" else None
+    redoc_url="/redoc" if config.APP_ENV != "enterprise" else None,
+    lifespan=lifespan
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)

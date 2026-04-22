@@ -9,13 +9,19 @@ class CacheService:
     def __init__(self):
         self.enabled = False
         try:
-            self.client = redis.from_url(config.REDIS_URL, decode_responses=False)
+            # Set strict timeouts to prevent startup hangs
+            self.client = redis.from_url(
+                config.REDIS_URL, 
+                decode_responses=False,
+                socket_timeout=0.5,
+                socket_connect_timeout=0.5
+            )
             self.client.ping()
             self.enabled = True
             logger.info("Redis cache connected")
         except Exception as e:
             if config.APP_ENV != "production":
-                logger.info(f"Redis cache disabled (Development fallback): Use a local Redis server to enable high-performance caching.")
+                logger.info(f"Redis cache disabled (Development fallback): Use a local Redis server for high performance.")
             else:
                 logger.warning(f"Redis not available, caching disabled: {e}")
 

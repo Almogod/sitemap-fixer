@@ -620,7 +620,79 @@ input:focus {
     font-size: 0.85rem;
 }
 
-/* Response for long labels */
+/* --- CINEMATIC STATUS INDICATOR --- */
+#loading-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2000;
+    pointer-events: none;
+    text-align: center;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.status-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+}
+
+.status-pulse {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-pulse::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    animation: pulse-ring 2s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+@keyframes pulse-ring {
+    0% { transform: scale(0.8); opacity: 0.8; }
+    50% { opacity: 0.4; }
+    100% { transform: scale(1.8); opacity: 0; }
+}
+
+#status-display {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    min-width: 300px;
+}
+
+.status-fade-in {
+    animation: statusTextIn 0.4s ease-out forwards;
+}
+
+@keyframes statusTextIn {
+    0% { opacity: 0; transform: translateY(10px) scale(0.95); filter: blur(4px); }
+    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+/* Force results mode to show glass cards */
+body.mode-results #loading-overlay {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* --- Response for long labels --- */
 @media (max-width: 768px) {
     .suggestions-table, .audit-table {
         display: block;
