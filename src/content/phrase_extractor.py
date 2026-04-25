@@ -93,9 +93,9 @@ KNOWN_COMPOUNDS: Set[str] = {
 }
 
 # ── PMI Scoring Parameters ─────────────────────────────────────────
-MIN_PMI_SCORE = 3.0       # Minimum PMI to consider a bigram significant
-MIN_BIGRAM_FREQ = 2       # Minimum times a bigram must appear
-MIN_WORD_LENGTH = 2       # Minimum word length (allow "tls", "api", etc.)
+MIN_PMI_SCORE = 2.5        # Lowered from 3.0 — capture more collocations
+MIN_BIGRAM_FREQ = 2        # Minimum times a bigram must appear
+MIN_WORD_LENGTH = 2        # Minimum word length (allow "tls", "api", etc.)
 
 
 def extract_meaningful_phrases(text: str, max_phrases: int = 40) -> List[str]:
@@ -122,13 +122,33 @@ def extract_meaningful_phrases(text: str, max_phrases: int = 40) -> List[str]:
             found_compounds.append(compound)
     
     # ── Phase 2: Tokenize for statistical analysis ────────────────────
-    # Use a more permissive regex that preserves short technical terms
+    # Use a permissive regex: any word with 2+ alphanumeric characters
     raw_tokens = re.findall(r'\b[a-z][a-z0-9]{1,}\b', text_lower)
-    # Filter only pure stopwords (keep short technical terms like "tls", "api", "dns")
-    tokens = [t for t in raw_tokens if t not in STOPWORDS or len(t) <= 3]
     
-    if len(tokens) < 5:
-        return found_compounds[:max_phrases]
+    # Keep tokens that are NOT stopwords, OR are known technical abbreviations
+    tokens = [
+        t for t in raw_tokens 
+        if t not in STOPWORDS or _is_technical_abbreviation(t)
+    ]
+    
+    # If we have very few tokens, also extract from URL/path fragments and titles
+    if len(tokens) < 10:
+        # Try extracting from raw text more aggressively
+        extra_tokens = re.findall(r'\b[a-z]{2,}\b', text_lower)
+        extra_tokens = [
+            t for t in extra_tokens 
+            if t not in STOPWORDS and len(t) >= 3
+        ]
+        tokens = list(dict.fromkeys(tokens + extra_tokens))  # Deduplicate, preserve order
+    
+    if len(tokens) < 3:
+        # Even with very few tokens, return whatever we have
+        result = list(set(found_compounds))
+        # Add any non-stopword tokens as individual keywords
+        for t in tokens:
+            if t not in STOPWORDS and len(t) >= 3 and not _is_noise_word(t):
+                result.append(t)
+        return result[:max_phrases]
     
     # ── Phase 3: PMI-scored bigram discovery ──────────────────────────
     unigram_counts = Counter(tokens)
@@ -196,16 +216,16 @@ def extract_meaningful_phrases(text: str, max_phrases: int = 40) -> List[str]:
     for phrase in all_phrases:
         phrase_words.update(phrase.split())
     
-    # Only add unigrams that aren't already part of a discovered phrase
-    for word, count in unigram_counts.most_common(60):
+    # Add unigrams that aren't already part of a discovered phrase
+    for word, count in unigram_counts.most_common(80):
         if word in phrase_words:
             continue
         if word in STOPWORDS:
             continue
-        if len(word) < 4:
-            # Allow short technical terms like "api", "cdn", "ssl", "tls"
-            if not _is_technical_abbreviation(word):
-                continue
+        if len(word) < 3:
+            continue
+        if len(word) == 3 and not _is_technical_abbreviation(word):
+            continue
         if _is_noise_word(word):
             continue
         all_phrases.add(word)
@@ -222,32 +242,78 @@ def extract_phrases_from_pages(pages: list, max_phrases: int = 50) -> List[str]:
     """
     Extract meaningful phrases from multiple crawled pages.
     Combines text from all pages for better statistical signal.
+    Enhanced to extract from titles, meta descriptions, headings, URLs,
+    and body text — weighted by SEO importance.
     """
     from bs4 import BeautifulSoup
     
     all_text_parts = []
-    title_text_parts = []
+    high_value_parts = []  # Titles, metas, headings — weighted higher
+    url_parts = []
     
     for p in pages:
         html = p.get("html", "")
+        url = p.get("url", "")
+        
+        # Extract keywords from URL path segments
+        if url:
+            from urllib.parse import urlparse
+            path = urlparse(url).path
+            # Convert path to words: /my-cool-page/ -> "my cool page"
+            path_words = re.sub(r'[^a-zA-Z0-9]', ' ', path).strip()
+            if path_words and len(path_words) > 2:
+                url_parts.append(path_words)
+        
         if html:
             soup = BeautifulSoup(html, "lxml")
-            # Only remove purely non-textual/interactive noise
+            
+            # Extract headings (H1-H3) as high-value signals
+            for tag in soup.find_all(["h1", "h2", "h3"]):
+                heading_text = tag.get_text(strip=True)
+                if heading_text and len(heading_text) > 3:
+                    high_value_parts.append(heading_text)
+            
+            # Extract title tag
+            title_tag = soup.find("title")
+            if title_tag:
+                title_text = title_tag.get_text(strip=True)
+                if title_text:
+                    high_value_parts.append(title_text)
+            
+            # Extract meta description
+            meta_tag = soup.find("meta", attrs={"name": "description"})
+            if meta_tag and meta_tag.get("content"):
+                high_value_parts.append(meta_tag["content"])
+            
+            # Extract meta keywords if present
+            meta_kw = soup.find("meta", attrs={"name": "keywords"})
+            if meta_kw and meta_kw.get("content"):
+                high_value_parts.append(meta_kw["content"])
+            
+            # Extract body text
             for s in soup(["script", "style", "noscript", "svg", "form", "button", "iframe"]):
                 s.decompose()
-            # Keep nav, footer, header for keywords!
             body_text = soup.get_text(" ", strip=True)[:10000]
             all_text_parts.append(body_text)
         
+        # Also use pre-extracted title/meta fields if available
         title = p.get("title", "")
         meta = p.get("meta_description", "")
         if title:
-            title_text_parts.append(title)
+            high_value_parts.append(title)
         if meta:
-            title_text_parts.append(meta)
+            high_value_parts.append(meta)
     
-    # Weight titles/meta 3x by repeating
-    combined = " ".join(title_text_parts * 3 + all_text_parts)
+    # Weight: high-value parts 5x, URL parts 3x, body text 1x
+    combined = " ".join(high_value_parts * 5 + url_parts * 3 + all_text_parts)
+    
+    if not combined.strip():
+        logger.warning("No text content found in any pages for keyword extraction")
+        # Last resort: extract from URLs only
+        if url_parts:
+            combined = " ".join(url_parts * 5)
+        else:
+            return []
     
     return extract_meaningful_phrases(combined, max_phrases)
 
@@ -310,6 +376,8 @@ def _is_technical_abbreviation(word: str) -> bool:
         "kpi", "sla", "aws", "gcp", "iam", "vpc", "ecs", "eks", "rds",
         "ci", "cd", "ml", "ai", "nlp", "llm", "rag", "gpu", "cpu",
         "ram", "ssd", "hdd", "url", "uri", "xml", "csv", "pdf", "web", "app",
+        "iot", "vpn", "cms", "cdn", "b2b", "b2c", "saas", "paas", "iaas",
+        "devops", "defi", "nft", "dao", "dapp",
     }
     return word.lower() in known_abbrevs
 
@@ -325,10 +393,15 @@ def _is_noise_word(word: str) -> bool:
     if len(word) > 4 and any(word.count(c) > len(word) / 2 for c in set(word)):
         return True
     # Very low vowel ratio for longer words (noise filter)
-    if len(word) > 6:
+    if len(word) > 8:
         vowels = sum(1 for c in word if c in "aeiouy")
-        if vowels / len(word) < 0.12:
+        if vowels / len(word) < 0.10:
             return True
+    # Pure digits or hex-like strings
+    if word.isdigit():
+        return True
+    if re.match(r'^[0-9a-f]+$', word) and len(word) > 6:
+        return True
     return False
 
 
@@ -356,11 +429,15 @@ def _rank_phrases(phrases: List[str], full_text: str,
         
         # Frequency score
         freq = full_text.count(phrase)
-        score += math.log(1 + freq)
+        score += math.log(1 + freq) * 1.5
         
         # Technical abbreviation bonus
         if any(_is_technical_abbreviation(w) for w in words):
             score += 3.0
+        
+        # Length bonus for meaningful single words (penalize very short)
+        if len(words) == 1 and len(phrase) >= 6:
+            score += 1.0
         
         scored.append((phrase, score))
     

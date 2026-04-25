@@ -215,8 +215,15 @@ async def run_plugin(
                             except: pass
 
                 progress("Running Keyword Strategy Engine (Phrase-Aware)...")
+                # Only pass pages that actually have HTML content for keyword extraction
+                pages_with_content = [p for p in context_data["pages"] if p.get("html")]
+                if not pages_with_content:
+                    progress("WARNING: No pages with HTML content found. Using homepage only.")
+                    pages_with_content = [p for p in context_data["pages"] if p.get("url") == site_url]
+                
+                progress(f"Analyzing keywords from {len(pages_with_content)} pages with content...")
                 content_res = run_content_engine(
-                    context_data["pages"], 
+                    pages_with_content, 
                     competitors, 
                     llm_config, 
                     domain=context_data["domain"]
@@ -225,9 +232,13 @@ async def run_plugin(
                 keyword_gaps = content_res.get("recommendations", [])
                 prime_keywords = content_res.get("prime_keywords", [])
                 site_phrases = content_res.get("site_phrases", [])
+                site_keywords = content_res.get("site_keywords", [])
                 report["keyword_recommendations"] = keyword_gaps
-                report["site_phrases"] = site_phrases  # Store phrase-aware keywords
+                report["site_phrases"] = site_phrases
+                report["site_keywords"] = site_keywords
+                progress(f"Discovered {len(site_phrases)} phrases and {len(site_keywords)} keywords.")
                 
+
                 # ═══════════════════════════════════════════════════
                 # STEP 4: Generate FAQs (Driven by Business Analysis + Phrases)
                 # ═══════════════════════════════════════════════════

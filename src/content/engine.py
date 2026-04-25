@@ -121,15 +121,18 @@ def _is_noise_term(term: str) -> bool:
 def is_noise(word: str) -> bool:
     """Returns True if the word looks like random gibberish or noise."""
     from src.content.phrase_extractor import _is_technical_abbreviation
-    if len(word) < 3: return True
+    if len(word) < 2: return True
     if _is_technical_abbreviation(word): return False
-    if len(word) < 4: return True # Non-technical 3-letter words are often noise
+    if len(word) < 3: return True # Non-technical 2-letter words are noise
     if not any(v in word for v in "aeiouy"): return True # No vowels
-    # Basic entropy check: low vowel ratio (less than 15%)
-    vowels = sum(1 for c in word if c in "aeiouy")
-    if vowels / len(word) < 0.12: return True
+    # Basic entropy check: low vowel ratio for long words only
+    if len(word) > 8:
+        vowels = sum(1 for c in word if c in "aeiouy")
+        if vowels / len(word) < 0.10: return True
     # Too many repeated characters (e.g., "aaaaa")
-    if any(word.count(c) > len(word) / 2 for c in set(word)): return True
+    if len(word) > 4 and any(word.count(c) > len(word) / 2 for c in set(word)): return True
+    # Pure digits or hex
+    if word.isdigit(): return True
     return False
 
 def _extract_bulk_keywords(pages) -> Counter:
@@ -152,9 +155,9 @@ def _extract_bulk_keywords(pages) -> Counter:
             
         title = p.get('title', '') or ''
         meta_desc = p.get('meta_description', '') or ''
-        combined_text = f"{title} {meta_desc} {body_text}".lower()
-        # Find all alpha strings (relaxed length to 3 to catch 'api', 'tls')
-        raw_words = re.findall(r'\b[a-z]{3,}\b', combined_text)
+        combined_text = f"{title} {title} {title} {meta_desc} {meta_desc} {body_text}".lower()
+        # Find alphanumeric words 2+ chars to catch 'ai', 'ml', 'api', etc.
+        raw_words = re.findall(r'\b[a-z][a-z0-9]{1,}\b', combined_text)
         words = [w for w in raw_words if w not in STOPWORDS and not is_noise(w)]
         
         unique_words = set(words)
@@ -189,7 +192,7 @@ def _extract_bulk_bigrams(pages) -> Counter:
         for s in soup(["script", "style"]): s.decompose()
         text = soup.get_text(" ", strip=True).lower()
         
-        raw_words = re.findall(r'\b[a-z]{3,}\b', text)
+        raw_words = re.findall(r'\b[a-z][a-z0-9]{1,}\b', text)
         words = [w for w in raw_words if w not in STOPWORDS and not is_noise(w)]
         
         for i in range(len(words) - 1):
