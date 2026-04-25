@@ -48,6 +48,28 @@ async def process_html_content(url: str, html: str, llm_config: dict = None):
         "structured_data": structured_data
     }
 
+async def process_raw_content(url: str, text: str, llm_config: dict = None):
+    """
+    Chunks and structures the business analysis from provided raw text (e.g. Github Repo source).
+    """
+    chunks = chunk_text(text, chunk_size=6000)
+    
+    logger.info(f"Extracted {len(chunks)} chunks from raw text for analysis.")
+    
+    structured_data = []
+    for i, chunk in enumerate(chunks):
+        logger.info(f"Processing chunk {i+1}/{len(chunks)}...")
+        extracted = await structure_business_chunk(chunk, llm_config)
+        if extracted:
+            structured_data.append(extracted)
+            
+    return {
+        "url": url,
+        "raw_text_length": len(text),
+        "chunk_count": len(chunks),
+        "structured_data": structured_data
+    }
+
 async def structure_business_chunk(chunk: str, llm_config: dict = None):
     """
     Sends a chunk to the LLM to extract business-specific data points.

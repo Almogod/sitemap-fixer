@@ -11,6 +11,7 @@ from src.services.deployer import deploy
 from src.services.gsc_service import GSCService
 from src.services.data_processing_service import process_html_content
 from src.services.site_analysis_service import synthesize_business_analysis
+from src.services.github_repo_analyzer import is_github_repo_url, analyze_github_repo
 
 task_store = TaskStore()
 
@@ -133,32 +134,63 @@ async def run_plugin(
                 # Fetch ONLY the homepage for business analysis
                 progress("Fetching homepage for Business Analysis...")
                 homepage_html = ""
-                async with httpx.AsyncClient(timeout=30) as client:
-                    try:
-                        res = await fetch(client, site_url)
-                        if res.get("status") == 200:
-                            homepage_html = res.get("html", "")
-                            # Seed pages list with homepage
-                            context_data["pages"] = [{
-                                "url": site_url,
-                                "html": homepage_html,
-                                "status": 200
-                            }]
-                    except Exception as e:
-                        logger.warning(f"Failed to fetch homepage {site_url}: {e}")
+                is_github = is_github_repo_url(site_url)
+                
+                if is_github:
+                    progress("GitHub repository detected. Analyzing source files directly via GitHub API...")
+                    github_token = llm_config.get("github_token") if llm_config else None
+                    if not github_token:
+                        github_token = deploy_config.get("github_token") if deploy_config else None
+                        
+                    repo_analysis = await analyze_github_repo(site_url, progress, github_token=github_token)
+                    if "error" in repo_analysis:
+                        progress(f"GitHub API Error: {repo_analysis['error']}")
+                        report["errors"].append({"phase": "analyze", "error": repo_analysis['error']})
+                    else:
+                        homepage_html = repo_analysis.get("combined_content", "")
+                        progress(f"Successfully fetched {repo_analysis.get('files_fetched')} source files from {site_url}.")
+                        context_data["pages"] = [{
+                            "url": site_url,
+                            "html": homepage_html,
+                            "status": 200
+                        }]
+                        
+                        from src.services.data_processing_service import process_raw_content
+                        progress("Extracting business intelligence from repo source code...")
+                        homepage_structured = []
+                        try:
+                            processed = await process_raw_content(site_url, homepage_html, llm_config=llm_config)
+                            homepage_structured = processed.get("structured_data", [])
+                        except Exception as e:
+                            logger.error(f"Repo processing failed: {e}")
 
-                if not homepage_html:
-                    report["errors"].append({"phase": "analyze", "error": "Could not fetch homepage"})
-                    progress("Homepage fetch failed. Skipping business analysis.")
-                else:
-                    # Process homepage content into structured data
-                    progress("Extracting business intelligence from homepage...")
-                    homepage_structured = []
-                    try:
-                        processed = await process_html_content(site_url, homepage_html, llm_config=llm_config)
-                        homepage_structured = processed.get("structured_data", [])
-                    except Exception as e:
-                        logger.error(f"Homepage processing failed: {e}")
+                if not is_github or not homepage_html:
+                    async with httpx.AsyncClient(timeout=30) as client:
+                        try:
+                            res = await fetch(client, site_url)
+                            if res.get("status") == 200:
+                                homepage_html = res.get("html", "")
+                                # Seed pages list with homepage
+                                context_data["pages"] = [{
+                                    "url": site_url,
+                                    "html": homepage_html,
+                                    "status": 200
+                                }]
+                        except Exception as e:
+                            logger.warning(f"Failed to fetch homepage {site_url}: {e}")
+
+                    if not homepage_html:
+                        report["errors"].append({"phase": "analyze", "error": "Could not fetch homepage"})
+                        progress("Homepage fetch failed. Skipping business analysis.")
+                    else:
+                        # Process homepage content into structured data
+                        progress("Extracting business intelligence from homepage...")
+                        homepage_structured = []
+                        try:
+                            processed = await process_html_content(site_url, homepage_html, llm_config=llm_config)
+                            homepage_structured = processed.get("structured_data", [])
+                        except Exception as e:
+                            logger.error(f"Homepage processing failed: {e}")
 
                     # Synthesize business analysis from homepage data only
                     site_analysis = await asyncio.to_thread(
