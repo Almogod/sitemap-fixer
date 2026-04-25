@@ -108,6 +108,10 @@ async def run_plugin(
     if "crawl" in pipeline:
         pipeline.remove("crawl")
 
+    business_context = {}
+    keyword_gaps = []
+    prime_keywords = []
+    site_phrases = []
     try:
         for phase in pipeline:
             progress(f"Starting phase: {phase}...")
