@@ -22,8 +22,8 @@
             <div class="nav-logo">URLFORGE</div>
             <div class="nav-links">
                 <a href="#" class="nav-link">Home</a>
-                <a href="#" class="nav-link">Features</a>
-                <a href="#" class="nav-link">FAQs</a>
+                <a href="#features-section" class="nav-link">Features</a>
+                <a href="#faqs-section" class="nav-link">FAQs</a>
                 <button class="nav-btn">Log In</button>
             </div>
         </nav>
@@ -41,73 +41,10 @@
 
     <!-- FORM CARD -->
     <div class="card result-card glass-card">
-        
-        <div class="tabs-header">
-            <button class="tab-btn active" onclick="switchTab('standard-tab')">Standard Analysis</button>
-            <button class="tab-btn" onclick="switchTab('plugin-tab')">Autonomous Plugin</button>
-        </div>
-
-        <!-- TAB 1: STANDARD -->
-        <div id="standard-tab" class="tab-content active">
-            <form id="generate-form" action="/generate" method="post">
-                <div class="form-group">
-                    <label>Target Domain</label>
-                    <input type="text" name="domain" placeholder="https://example.com" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Crawl Limit (Pages)</label>
-                    <input type="number" name="limit" value="50" min="1" required>
-                </div>
-
-                <div class="checkbox-group">
-                    <input type="checkbox" id="broken_links_only" name="broken_links_only" value="true">
-                    <label for="broken_links_only">Only report/crawl broken links</label>
-                </div>
-
-                <div style="border-top: 1px dashed var(--card-border); padding-top: 15px; margin-top: 15px;">
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px; font-weight: 600;">ENTERPRISE CRAWLER SETTINGS</p>
-                    <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                        <div class="form-group" style="flex: 1; margin: 0;">
-                            <label>Max Depth</label>
-                            <input type="number" name="max_depth" value="10" min="1" max="100">
-                        </div>
-                        <div class="form-group" style="flex: 1; margin: 0;">
-                            <label>Concurrency</label>
-                            <input type="number" name="concurrency" value="10" min="1" max="50">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Crawler Identity (User-Agent)</label>
-                        <select name="user_agent" style="width:100%; padding:14px 18px; border-radius:12px; border:1px solid var(--card-border); background:rgba(255,255,255,0.3); font-family:'Inter', sans-serif;">
-                            <option value="chrome">Google Chrome (Desktop)</option>
-                            <option value="googlebot">GoogleBot</option>
-                            <option value="googlebot_mobile">GoogleBot (Smartphone)</option>
-                            <option value="bingbot">BingBot</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Storage Backend</label>
-                        <select name="crawler_backend" style="width:100%; padding:14px 18px; border-radius:12px; border:1px solid var(--card-border); background:rgba(255,255,255,0.3); font-family:'Inter', sans-serif;">
-                            <option value="memory">In-Memory (Fast, &lt;10k pages)</option>
-                            <option value="sqlite">SQLite (Enterprise, &gt;10k pages)</option>
-                        </select>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="crawl_assets" name="crawl_assets" value="true">
-                        <label for="crawl_assets">Enable Deep Asset Crawl (CSS, JS, Images, PDFs)</label>
-                    </div>
-                </div>
-
-                <button type="submit" class="submit-btn" id="submit-btn">Run Engine</button>
-            </form>
-        </div>
-
-        <!-- TAB 2: AUTONOMOUS PLUGIN -->
-        <div id="plugin-tab" class="tab-content">
+        <div id="plugin-tab">
+            <h2 class="section-title" style="margin-bottom: 10px;">Autonomous Plugin Engine</h2>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
-                Crawl, analyze, fix SEO loopholes, generate new content for keyword gaps, and deploy back to site.
+                Crawl, analyze, fix SEO loopholes, generate new content for keyword gaps, and deploy back to site autonomously.
             </p>
             <form id="plugin-form" action="/plugin/run" method="post">
                 <div class="form-group">
@@ -1037,6 +974,83 @@
         </div>
     </div>
 </div>
+
+<section id="features-section" class="features-section" style="padding: 60px 20px; max-width: 1200px; margin: 0 auto;">
+    <h2 class="section-title" style="text-align: center; margin-bottom: 40px;">Why Choose UrlForge?</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+        <div class="glass-card" style="padding: 30px; border-radius: 16px; border: 1px solid var(--card-border);">
+            <div style="font-size: 2.5rem; margin-bottom: 15px;">🧠</div>
+            <h3 style="margin-bottom: 10px; font-weight: 700;">Provider-Agnostic Engine</h3>
+            <p style="color: var(--text-muted); line-height: 1.6; font-size: 0.95rem;">You have total control over the AI. Choose between Google Gemini, OpenAI, OpenRouter, or run it entirely privately using Ollama on your local machine.</p>
+        </div>
+        <div class="glass-card" style="padding: 30px; border-radius: 16px; border: 1px solid var(--card-border);">
+            <div style="font-size: 2.5rem; margin-bottom: 15px;">🔍</div>
+            <h3 style="margin-bottom: 10px; font-weight: 700;">Holistic Business Analysis</h3>
+            <p style="color: var(--text-muted); line-height: 1.6; font-size: 0.95rem;">UrlForge doesn't just look at keywords. It analyzes your homepage to understand your core business category, audience, and market gap before generating strategies.</p>
+        </div>
+        <div class="glass-card" style="padding: 30px; border-radius: 16px; border: 1px solid var(--card-border);">
+            <div style="font-size: 2.5rem; margin-bottom: 15px;">✨</div>
+            <h3 style="margin-bottom: 10px; font-weight: 700;">Autonomous DOM Fixer</h3>
+            <p style="color: var(--text-muted); line-height: 1.6; font-size: 0.95rem;">No more manual coding. UrlForge parses your malformed HTML, injects canonicals, demotes duplicate H1s, and applies structural fixes automatically.</p>
+        </div>
+        <div class="glass-card" style="padding: 30px; border-radius: 16px; border: 1px solid var(--card-border);">
+            <div style="font-size: 2.5rem; margin-bottom: 15px;">🚀</div>
+            <h3 style="margin-bottom: 10px; font-weight: 700;">Direct CI/CD Integration</h3>
+            <p style="color: var(--text-muted); line-height: 1.6; font-size: 0.95rem;">Once you approve the fixes, UrlForge securely deploys the patched files directly to your GitHub repository or Vercel, streamlining your workflow.</p>
+        </div>
+        <div class="glass-card" style="padding: 30px; border-radius: 16px; border: 1px solid var(--card-border);">
+            <div style="font-size: 2.5rem; margin-bottom: 15px;">📈</div>
+            <h3 style="margin-bottom: 10px; font-weight: 700;">Google Search Console Sync</h3>
+            <p style="color: var(--text-muted); line-height: 1.6; font-size: 0.95rem;">Automatically ping the Google Indexing API to notify search engines about your new fixed pages, bypassing crawl delays.</p>
+        </div>
+        <div class="glass-card" style="padding: 30px; border-radius: 16px; border: 1px solid var(--card-border);">
+            <div style="font-size: 2.5rem; margin-bottom: 15px;">📝</div>
+            <h3 style="margin-bottom: 10px; font-weight: 700;">Content Generation</h3>
+            <p style="color: var(--text-muted); line-height: 1.6; font-size: 0.95rem;">Automatically identify keyword gaps and generate high-quality, relevant SEO pages designed specifically to outrank your competitors.</p>
+        </div>
+    </div>
+</section>
+
+<section id="faqs-section" class="faqs-section" style="padding: 60px 20px; max-width: 1000px; margin: 0 auto 100px auto;">
+    <h2 class="section-title" style="text-align: center; margin-bottom: 40px;">Frequently Asked Questions</h2>
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+        <div class="faq-accordion glass-card" style="padding: 20px; border-radius: 12px; border: 1px solid var(--card-border);">
+            <h4 style="margin: 0; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between;" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                Is UrlForge a Plugin, a SaaS, or a Desktop App? <span>+</span>
+            </h4>
+            <div class="hidden" style="margin-top: 15px; color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+                UrlForge is an <strong>Autonomous Backend Engine</strong>. While it has a Web UI, it functions primarily as a "DevSecOps Plugin" for your website repository. It plugs into your codebase, analyzes it, and pushes fixes directly to your GitHub/Vercel.
+            </div>
+        </div>
+        
+        <div class="faq-accordion glass-card" style="padding: 20px; border-radius: 12px; border: 1px solid var(--card-border);">
+            <h4 style="margin: 0; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between;" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                Can I deploy this on Render.com? <span>+</span>
+            </h4>
+            <div class="hidden" style="margin-top: 15px; color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+                Yes! UrlForge is fully containerized and production-ready for Render.com. We provide a <code>render.yaml</code> blueprint. Once deployed on Render, it runs as your centralized SEO brain. You can log into your Render-hosted UrlForge dashboard and tell it to fix any of your remote websites.
+            </div>
+        </div>
+
+        <div class="faq-accordion glass-card" style="padding: 20px; border-radius: 12px; border: 1px solid var(--card-border);">
+            <h4 style="margin: 0; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between;" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                Do I need to pay for API credits? <span>+</span>
+            </h4>
+            <div class="hidden" style="margin-top: 15px; color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+                It's up to you. You can use your own OpenAI or Google Gemini API keys. However, if you want a 100% free and private experience, you can point UrlForge to a local <strong>Ollama</strong> instance and run open-source models like Llama 3 entirely for free.
+            </div>
+        </div>
+        
+        <div class="faq-accordion glass-card" style="padding: 20px; border-radius: 12px; border: 1px solid var(--card-border);">
+            <h4 style="margin: 0; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between;" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                Will it break my website's design? <span>+</span>
+            </h4>
+            <div class="hidden" style="margin-top: 15px; color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+                No. The <code>html_rewriter</code> engine strictly manipulates only specific SEO tags (like <code>&lt;title&gt;</code>, <code>&lt;meta&gt;</code>, <code>&lt;h1&gt;</code>) and safely injects headers without touching your structural CSS classes or complex JS frameworks. Plus, you get to review all changes before they are deployed.
+            </div>
+        </div>
+    </div>
+</section>
 
 <script>
     // --- UrlForge Interactive Core ---
