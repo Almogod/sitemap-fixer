@@ -115,7 +115,7 @@
 
                 <div class="ai-world-section" style="border-top: 1px solid var(--card-border); margin-top: 20px; padding-top: 20px;">
                     <!-- DISCOVERY CARD VIEW -->
-                    <div id="ai-discovery-card" class="ai-discovery-card" onclick="revealAIForms()" style="cursor: pointer; position: relative; z-index: 10;">
+                    <div id="ai-discovery-card" class="ai-discovery-card" style="cursor: pointer; position: relative; z-index: 10;">
                         <h3 class="ai-world-title">The Data World of AI ✨</h3>
                         <div class="ai-orbit-system">
                             <div class="orbit-ring" style="width: 140px; height: 140px; animation-duration: 8s;"></div>
@@ -138,7 +138,7 @@
                     <div id="ai-config-forms" class="ai-config-forms hidden">
                         <div class="form-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--primary-color);">
                             <label style="color: var(--primary-color); font-weight: 700;">Primary AI Engine (User Choice)</label>
-                            <select name="primary_provider" onchange="updateAIFields()" style="width:100%; padding:12px; border-radius:8px; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); color: #fff; font-weight: 600;">
+                            <select name="primary_provider" id="primary-ai-provider" style="width:100%; padding:12px; border-radius:8px; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); color: #fff; font-weight: 600;">
                                 <option value="gemini">Google Gemini (Use Google AI Studio API)</option>
                                 <option value="ollama">Ollama (Local / Private)</option>
                                 <option value="openai">OpenAI (Creative Content)</option>
@@ -174,7 +174,7 @@
                             <label>Site Access Token (Optional)</label>
                             <input type="password" name="site_token" placeholder="Bearer or custom token">
                         </div>
-                        <button type="button" class="back-to-world" onclick="hideAIForms(event)">← Back to Data World</button>
+                        <button type="button" class="back-to-world" id="back-to-world-btn">← Back to Data World</button>
                     </div>
                 </div>
 
@@ -1306,6 +1306,25 @@
         }
     }
 
+
+    // Initialize AI World interactions
+    document.addEventListener('DOMContentLoaded', () => {
+        const aiDiscoveryCard = document.getElementById('ai-discovery-card');
+        const backToWorldBtn = document.getElementById('back-to-world-btn');
+        const aiProviderSelect = document.getElementById('primary-ai-provider');
+        
+        if (aiDiscoveryCard) {
+            aiDiscoveryCard.addEventListener('click', revealAIForms);
+        }
+        
+        if (backToWorldBtn) {
+            backToWorldBtn.addEventListener('click', hideAIForms);
+        }
+
+        if (aiProviderSelect) {
+            aiProviderSelect.addEventListener('change', updateAIFields);
+        }
+    });
 
     const navBtn = document.querySelector('.nav-btn');
     if (navBtn) {

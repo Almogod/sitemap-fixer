@@ -84,7 +84,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # CSP with Nonce for scripts
         csp = (
             f"default-src 'self'; "
-            f"script-src 'self' 'nonce-{nonce}' https://cdn.jsdelivr.net; "
+            f"script-src 'self' 'unsafe-inline' 'nonce-{nonce}' https://cdn.jsdelivr.net; "
             f"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             f"font-src 'self' https://fonts.gstatic.com; "
             f"img-src 'self' data: https:; "
