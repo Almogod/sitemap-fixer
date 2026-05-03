@@ -1867,19 +1867,13 @@
              const step = 350;
              let targetX, targetY;
              
-             if (index === 0) {
-                 // Start slightly left of center to balance the first row
-                 targetX = 1700; 
-                 targetY = 1800;
-             } else {
-                 const prev = pipelineNodes[index - 1];
-                 // 3-node rows for better centering
-                 const col = index % 3;
-                 const row = Math.floor(index / 3);
-                 
-                 targetX = 1700 + (col * step);
-                 targetY = 1800 + (row * step);
-             }
+             // 3-node rows centered around the 2000, 2000 origin
+             const col = index % 3;
+             const row = Math.floor(index / 3);
+             
+             // Col 0: 1650, Col 1: 2000, Col 2: 2350 -> Centered on 2000
+             targetX = 2000 + (col - 1) * step;
+             targetY = 1800 + (row * step);
              
              const nodeEl = document.createElement('div');
              nodeEl.className = 'pipeline-node active';

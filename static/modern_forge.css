@@ -686,12 +686,17 @@ input:focus {
 }
 
 .pipeline-board {
-    position: relative;
+    position: absolute;
     width: 4000px;
     height: 4000px;
+    top: 50%;
+    left: 50%;
+    margin-left: -2000px;
+    margin-top: -2000px;
     transform-style: preserve-3d;
     transition: transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
-    transform: rotateX(0deg) rotateZ(0deg); /* Top-down POV */
+    transform-origin: center center;
+    transform: rotateX(0deg) rotateZ(0deg); 
 }
 
 .pipeline-node {

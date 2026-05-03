@@ -1,11 +1,12 @@
-User-agent: *
-Disallow: /wp-content/uploads/wc-logs/
-Disallow: /wp-content/uploads/woocommerce_transient_files/
-Disallow: /wp-content/uploads/woocommerce_uploads/
-Disallow: /*?add-to-cart=
-Disallow: /*?*add-to-cart=
-Disallow: /wp-admin/
-Allow: /wp-admin/admin-ajax.php
-
-Sitemap: https://brahmaputrafables.in/sitemap.xml
-Sitemap: https://brahmaputrafables.in/sitemap.rss
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /preview/
+Disallow: /draft/
+Disallow: /certificates/
+
+Sitemap: https://www.qcecuring.com/sitemap.xml
+Sitemap: https://www.qcecuring.com/image-sitemap.xml
