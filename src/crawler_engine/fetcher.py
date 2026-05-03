@@ -22,6 +22,7 @@ async def fetch(client, url, retries=5, backoff_factor=2.0, follow_redirects=Tru
     for attempt in range(retries):
         try:
             headers = {
+                "User-Agent": random.choice(USER_AGENTS),
                 "Accept-Language": "en-US,en;q=0.9",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                 "Accept-Encoding": random.choice(ACCEPT_ENCODINGS),

@@ -119,6 +119,8 @@ async def run_plugin(
                 # Fetch ONLY the homepage for business analysis
                 progress("Fetching homepage for Business Analysis...")
                 homepage_html = ""
+                homepage_structured = []
+                is_github_error = False
                 is_github = is_github_repo_url(site_url)
                 
                 if is_github:
@@ -159,7 +161,7 @@ async def run_plugin(
                         except Exception as e:
                             logger.error(f"Repo processing failed: {e}")
 
-                if not is_github or (not homepage_html and not locals().get("is_github_error", False)):
+                if not is_github or (not homepage_html and not is_github_error):
                     async with httpx.AsyncClient(timeout=30) as client:
                         try:
                             res = await fetch(client, site_url)
@@ -188,7 +190,7 @@ async def run_plugin(
                             logger.error(f"Homepage processing failed: {e}")
 
                 # Only synthesize if we didn't hit a fatal GitHub error
-                if not locals().get("is_github_error", False):
+                if not is_github_error:
                     # Synthesize business analysis from homepage data only
                     site_analysis = await asyncio.to_thread(
                         synthesize_business_analysis,
